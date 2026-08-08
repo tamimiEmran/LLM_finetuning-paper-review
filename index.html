@@ -475,7 +475,7 @@ everything as markdown. Marks live in this browser only.</p>
   <button class="mk tweak" data-v="tweak" title="Tweak — minor rework">~</button>
   <button class="mk fix" data-v="fix" title="Fix — must change">✗</button>
 </div>
-<div class="body"><p class="galley">Three findings emerge. First, explanations are not free, but they are cheap. Training on rationales costs -0.0159 macro-F1 against the label-only control, a small but statistically significant identification penalty (CI excluding zero; McNemar p = 0.0067). Binary detection, however, is statistically unchanged (Δ balanced accuracy +0.0029, CI containing zero), so the utility pays nothing in detection to gain an explanation for every flag. Second, the explanations are substantive rather than decorative. R1 reaches a ROUGE-L of 0.454 against the teacher and, on the stricter test, states the numerically correct attack parameter on 85.3% of checkable days. Third, the label-blind teacher supervises explanations as well as the label-aware one. R2b is statistically tied with R2a on classification and ahead on parameter fidelity (0.400 vs.\ 0.277), which suggests that rationale supervision does not require annotated attacks at teacher time. We note two scope limits honestly. The planned LLM-judge assessment of rationale quality was not run; a frozen 1,440-row judging package with a pinned rubric is prepared for external scoring. R0's headline macro-F1 of 0.9444, the highest in this paper, comes from a different recipe than the screening runs and therefore does not enter the model comparison of the screening results (RQ1). An explanation names the mechanism; an inspector planning recovery also needs its size, which is the final capability we test. In summary, we can conclude that mechanism explanations cost 1.6 macro-F1 points and no detection, and we next extend the same output schema from naming the theft to quantifying it.</p><div class="rhythm"><i style="width:6px" title="3 words"></i><i style="width:18px" title="9 words"></i><i style="width:48px" title="24 words"></i><i style="width:54px" title="27 words"></i><i style="width:16px" title="8 words"></i><i style="width:50px" title="25 words"></i><i style="width:24px" title="12 words"></i><i style="width:58px" title="29 words"></i><i style="width:12px" title="6 words"></i><i style="width:48px" title="24 words"></i><i style="width:64px" title="32 words"></i><i style="width:40px" title="20 words"></i><i style="width:60px" title="30 words"></i><span>13 sentences · mean 19 w</span></div>
+<div class="body"><p class="galley">Three findings emerge. First, explanations are not free, but they are cheap. Training on rationales costs -0.0159 macro-F1 against the label-only control, a small but statistically significant identification penalty (CI excluding zero; McNemar p = 0.0067). Binary detection, however, is statistically unchanged (Δ balanced accuracy +0.0029, CI containing zero), so the utility pays nothing in detection to gain an explanation for every flag. Second, the explanations are substantive rather than decorative. R1 reaches a ROUGE-L of 0.454 against the teacher and, on the stricter test, states the numerically correct attack parameter on 85.3% of checkable days. Third, the label-blind teacher supervises explanations as well as the label-aware one. R2b is statistically tied with R2a on classification and ahead on parameter fidelity (0.400 vs.\ 0.277). Notably, the label-aware teacher was handed the exact generation parameters when writing its rationales, yet its student recovers the correct parameter <em>less</em> often than the student of the teacher that never saw them. This suggests that label-aware rationales transmit the teacher's conclusion rather than the evidence-reading that should support it: a teacher forced to infer the attack from the readings must demonstrate the derivation, and the derivation, not the verdict, is what a student can reuse on unseen days. In other words, rationale supervision transfers a skill, not an answer — and only the label-blind teacher exercises the skill. Beyond explaining the R2 ordering, this removes a deployment dependency, since rationale supervision evidently does not require annotated attacks at teacher time. We note two scope limits honestly. The planned LLM-judge assessment of rationale quality was not run; a frozen 1,440-row judging package with a pinned rubric is prepared for external scoring. R0's headline macro-F1 of 0.9444, the highest in this paper, comes from a different recipe than the screening runs and therefore does not enter the model comparison of the screening results (RQ1). An explanation names the mechanism; an inspector planning recovery also needs its size, which is the final capability we test. In summary, we can conclude that mechanism explanations cost 1.6 macro-F1 points and no detection, and we next extend the same output schema from naming the theft to quantifying it.</p><div class="rhythm"><i style="width:6px" title="3 words"></i><i style="width:18px" title="9 words"></i><i style="width:48px" title="24 words"></i><i style="width:54px" title="27 words"></i><i style="width:16px" title="8 words"></i><i style="width:50px" title="25 words"></i><i style="width:24px" title="12 words"></i><i style="width:32px" title="16 words"></i><i style="width:66px" title="33 words"></i><i style="width:90px" title="46 words"></i><i style="width:40px" title="20 words"></i><i style="width:44px" title="22 words"></i><i style="width:12px" title="6 words"></i><i style="width:48px" title="24 words"></i><i style="width:64px" title="32 words"></i><i style="width:40px" title="20 words"></i><i style="width:60px" title="30 words"></i><span>17 sentences · mean 21 w</span></div>
 <textarea class="note" placeholder="Margin note (saved locally)…"></textarea></div>
 </div></details>
 <details class="group"><summary><span class="crumb">Results and Discussion</span> Quantifying Theft Magnitude (RQ5) <span class="count">2 ¶</span></summary><div class="item" data-id="prose_11_0" data-kind="prose">
@@ -853,10 +853,19 @@ everything as markdown. Marks live in this browser only.</p>
   <button class="mk tweak" data-v="tweak" title="Tweak — minor rework">~</button>
   <button class="mk fix" data-v="fix" title="Fix — must change">✗</button>
 </div>
-<div class="body"><dl><dt>Leans on</dt><dd class="plain ctx">Third, the label-blind teacher supervises explanations as well as the label-aware one.</dd><dt>Claim</dt><dd class="galley">“R2b is statistically tied with R2a on classification and ahead on parameter fidelity (0.400 vs.\ 0.277), which suggests that rationale supervision does not require annotated attacks at teacher time.”</dd></dl>
+<div class="body"><dl><dt>Leans on</dt><dd class="plain ctx">Notably, the label-aware teacher was handed the exact generation parameters when writing its rationales, yet its student recovers the correct parameter less often than the student of the teacher that never saw them.</dd><dt>Claim</dt><dd class="galley">“This suggests that label-aware rationales transmit the teacher&#x27;s conclusion rather than the evidence-reading that should support it: a teacher forced to infer the attack from the readings must demonstrate the derivation, and the derivation, not the verdict, is what a student can reuse on unseen days.”</dd></dl>
 <textarea class="note" placeholder="Margin note (saved locally)…"></textarea></div>
 </div>
 <div class="item" data-id="claim_13" data-kind="claim">
+<div class="rail">
+  <button class="mk stet" data-v="pass" title="Stet — passes review">✓</button>
+  <button class="mk tweak" data-v="tweak" title="Tweak — minor rework">~</button>
+  <button class="mk fix" data-v="fix" title="Fix — must change">✗</button>
+</div>
+<div class="body"><dl><dt>Leans on</dt><dd class="plain ctx">This suggests that label-aware rationales transmit the teacher&#x27;s conclusion rather than the evidence-reading that should support it: a teacher forced to infer the attack from the readings must demonstrate the derivation, and the derivation, not the verdict, is what a student can reuse on unseen days.</dd><dt>Claim</dt><dd class="galley">“In other words, rationale supervision transfers a skill, not an answer — and only the label-blind teacher exercises the skill.”</dd></dl>
+<textarea class="note" placeholder="Margin note (saved locally)…"></textarea></div>
+</div>
+<div class="item" data-id="claim_14" data-kind="claim">
 <div class="rail">
   <button class="mk stet" data-v="pass" title="Stet — passes review">✓</button>
   <button class="mk tweak" data-v="tweak" title="Tweak — minor rework">~</button>
@@ -866,7 +875,7 @@ everything as markdown. Marks live in this browser only.</p>
 <textarea class="note" placeholder="Margin note (saved locally)…"></textarea></div>
 </div>
 <h4 class="clgroup">Quantifying Theft Magnitude (RQ5)</h4>
-<div class="item" data-id="claim_14" data-kind="claim">
+<div class="item" data-id="claim_15" data-kind="claim">
 <div class="rail">
   <button class="mk stet" data-v="pass" title="Stet — passes review">✓</button>
   <button class="mk tweak" data-v="tweak" title="Tweak — minor rework">~</button>
@@ -875,7 +884,7 @@ everything as markdown. Marks live in this browser only.</p>
 <div class="body"><dl><dt>Leans on</dt><dd class="plain ctx">The pre-registered interference check completes the picture: adding the magnitude target does not degrade classification relative to the plain workhorse (Δ macro-F1 +0.0057, CI [-0.0043, +0.0157]; McNemar p = 1.000 binary, 0.295 multiclass).</dd><dt>Claim</dt><dd class="galley">“In other words, the model&#x27;s value is not any single number but the integrated output — one JSON object that detects the theft, names its mechanism, estimates its size, and locates its window, at no measured cost to the detection it rides on.”</dd></dl>
 <textarea class="note" placeholder="Margin note (saved locally)…"></textarea></div>
 </div>
-<div class="item" data-id="claim_15" data-kind="claim">
+<div class="item" data-id="claim_16" data-kind="claim">
 <div class="rail">
   <button class="mk stet" data-v="pass" title="Stet — passes review">✓</button>
   <button class="mk tweak" data-v="tweak" title="Tweak — minor rework">~</button>
@@ -885,7 +894,7 @@ everything as markdown. Marks live in this browser only.</p>
 <textarea class="note" placeholder="Margin note (saved locally)…"></textarea></div>
 </div>
 <h4 class="clgroup">Cost–Performance Deployment Frontier (RQ6)</h4>
-<div class="item" data-id="claim_16" data-kind="claim">
+<div class="item" data-id="claim_17" data-kind="claim">
 <div class="rail">
   <button class="mk stet" data-v="pass" title="Stet — passes review">✓</button>
   <button class="mk tweak" data-v="tweak" title="Tweak — minor rework">~</button>
