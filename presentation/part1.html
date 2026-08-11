@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Energy-Theft Detection with Fine-Tuned Open LLMs — Part 1</title>
+<style>
+  :root{
+    --paper:#FBFBF9; --panel:#F2F4F1; --ink:#1C2B33; --muted:#5C6E78;
+    --grid:#E2E6E1; --line:#C9D0CB;
+    --benign:#17667C; --benign-soft:#D9E8ED;
+    --theft:#C74E12; --theft-soft:#F6E3D7;
+    --mono:"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;
+    --sans:"Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    --serif:Charter,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);overflow:hidden}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;padding:4.2vh 5vw 9vh}
+  .slide.active{display:flex}
+  @media (prefers-reduced-motion:no-preference){
+    .slide.active{animation:fadein .28s ease-out}
+    @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  }
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;color:var(--theft);text-transform:uppercase;margin-bottom:1.1vh}
+  h1{font-family:var(--serif);font-weight:600;font-size:2.35rem;line-height:1.12;margin-bottom:1.6vh}
+  h2{font-family:var(--serif);font-weight:600;font-size:1.05rem;margin-bottom:.6vh}
+  p.lede{font-size:1.02rem;color:var(--muted);max-width:62ch;line-height:1.5}
+  .cols{display:flex;gap:3vw;flex:1;min-height:0;align-items:stretch;margin-top:2.2vh}
+  .col{min-width:0}
+  .panel{background:var(--panel);border:1px solid var(--grid);border-radius:10px;padding:1.6vh 1.2vw}
+  .big{font-family:var(--serif);font-size:2.1rem;line-height:1}
+  .unit{font-size:.8rem;color:var(--muted)}
+  .kv{display:flex;gap:2.2vw;flex-wrap:wrap;margin-top:1.6vh}
+  .kv div{min-width:7.5rem}
+  .kv .n{font-family:var(--serif);font-size:1.7rem}
+  .kv .l{font-size:.78rem;color:var(--muted);margin-top:.2rem;line-height:1.3}
+  .mono{font-family:var(--mono)}
+  .cap{font-size:.78rem;color:var(--muted);margin-top:.8vh;line-height:1.45}
+  svg{display:block;width:100%;height:auto}
+  .legend{display:flex;gap:1.4rem;font-size:.78rem;color:var(--muted);margin-top:.6vh;align-items:center}
+  .swatch{display:inline-block;width:1.05rem;height:0;border-top:2.5px solid;vertical-align:middle;margin-right:.4rem}
+  /* footer: 96-tick meter strip = progress */
+  .meter{position:fixed;left:5vw;right:5vw;bottom:3.2vh;display:flex;gap:2px;align-items:flex-end;height:14px}
+  .meter i{flex:1;background:var(--grid);height:7px;border-radius:1px}
+  .meter i.on{background:var(--theft);height:12px}
+  .pageno{position:fixed;right:5vw;bottom:5.6vh;font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+  .footnote{position:fixed;left:5vw;bottom:5.6vh;font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+  /* taxonomy grid */
+  .tax{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1vh 1vw;flex:1;min-height:0;margin-top:1.6vh}
+  .tax .cell{background:#fff;border:1px solid var(--grid);border-radius:8px;padding:.7vh .6vw .5vh;display:flex;flex-direction:column}
+  .tax .hd{display:flex;justify-content:space-between;align-items:baseline}
+  .tax .nm{font-family:var(--mono);font-size:.78rem;font-weight:600}
+  .tax .fam{font-family:var(--mono);font-size:.62rem;padding:.05rem .35rem;border-radius:3px;background:var(--benign-soft);color:var(--benign)}
+  .tax .mech{font-size:.68rem;color:var(--muted);line-height:1.25;margin-top:.3vh}
+  /* prompt anatomy */
+  .prompt{font-family:var(--mono);font-size:.68rem;line-height:1.5;background:#fff;border:1px solid var(--grid);border-radius:8px;overflow:hidden}
+  .seg{padding:.55rem .8rem;border-left:4px solid transparent;white-space:pre-wrap}
+  .seg+.seg{border-top:1px dashed var(--grid)}
+  .seg .tag{float:right;font-size:.6rem;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-left:1rem}
+  .seg.role{border-left-color:var(--benign)}
+  .seg.cat{border-left-color:#7A6AA0}
+  .seg.stats{border-left-color:#B0892B}
+  .seg.reads{border-left-color:var(--theft)}
+  .seg.task{border-left-color:#4E7A3A}
+  .dim{color:#9AA7AD}
+  .tokbar{display:flex;height:16px;border-radius:4px;overflow:hidden;margin-top:1vh;border:1px solid var(--grid)}
+  .tokbar div{height:100%}
+  /* output schema */
+  .code{font-family:var(--mono);font-size:.76rem;line-height:1.55;background:#fff;border:1px solid var(--grid);border-radius:8px;padding:1rem 1.1rem;white-space:pre-wrap}
+  .code .k{color:var(--benign)} .code .v{color:var(--theft)} .code .c{color:#9AA7AD}
+  .chip{display:inline-block;font-family:var(--mono);font-size:.72rem;background:var(--theft-soft);color:var(--theft);border-radius:4px;padding:.15rem .5rem;margin:.15rem .2rem .15rem 0}
+  .chip.ok{background:#E2EEDC;color:#3E6B2C}
+  .quote{font-size:.9rem;line-height:1.55;border-left:3px solid var(--theft);padding:.4rem 0 .4rem 1rem;color:var(--ink)}
+  /* split diagram */
+  .flowlab{font-size:.75rem;color:var(--muted)}
+  ul.clean{list-style:none}
+  ul.clean li{padding-left:1.2rem;position:relative;margin-bottom:1vh;font-size:.92rem;line-height:1.45}
+  ul.clean li::before{content:"—";position:absolute;left:0;color:var(--theft)}
+  .titlewrap{margin:auto 0;max-width:64vw}
+  .title-authors{margin-top:2.4vh;font-size:.95rem;color:var(--muted)}
+  .title-part{font-family:var(--mono);font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--theft);margin-top:3vh}
+  .hint{position:fixed;right:5vw;top:4vh;font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- 1 ▸ TITLE -->
+<section class="slide" id="s1">
+  <div class="titlewrap">
+    <div class="eyebrow">Committee presentation · Qatar University</div>
+    <h1 style="font-size:2.9rem">Fine-Tuned Open-Weight Language Models for Explainable Energy-Theft Detection</h1>
+    <p class="lede" style="margin-top:1vh">Accuracy, generalization, and deployment cost</p>
+    <div class="title-authors">Emran Altamimi · Abdulaziz Al-Ali · Abdulla K. Al-Ali · Qutaibah M. Malluhi</div>
+    <div class="title-part">Part 1 · the problem, the data, and the model interface</div>
+  </div>
+  <div style="position:absolute;left:5vw;right:5vw;bottom:12vh;opacity:.9"><svg id="titleCurve" viewBox="0 0 960 110" preserveAspectRatio="none" style="height:110px"></svg></div>
+  <div class="hint">→ / ← to navigate</div>
+</section>
+
+<!-- 2 ▸ PROBLEM -->
+<section class="slide" id="s2">
+  <div class="eyebrow">Problem</div>
+  <h1>Electricity theft hides inside ordinary meter data</h1>
+  <div class="cols">
+    <div class="col" style="flex:1.05">
+      <p class="lede">A smart meter reports consumption every 15 minutes: 96 readings per day. A tampering consumer manipulates those readings so the bill shrinks while usage does not. Utilities call this <em>non-technical loss</em>.</p>
+      <ul class="clean" style="margin-top:2.2vh">
+        <li><strong>The task, per meter-day:</strong> given one query day plus that consumer's preceding reference week, decide <span class="mono">original</span> vs <span class="mono">manipulated</span>, and if manipulated, identify which of 12 attack mechanisms produced it.</li>
+        <li><strong>Why it is hard:</strong> every consumer's normal profile is different, and a skilled manipulation resembles nothing more suspicious than a frugal day.</li>
+        <li><strong>Who pays for errors:</strong> a false positive dispatches a site inspection to an honest consumer; the inspection budget, at utility scale, is the binding constraint.</li>
+      </ul>
+      <div class="kv">
+        <div><div class="n">96</div><div class="l">readings per day<br>(15-minute intervals)</div></div>
+        <div><div class="n">7 + 1</div><div class="l">reference days<br>+ query day</div></div>
+        <div><div class="n">12 + 1</div><div class="l">attack mechanisms<br>+ benign class</div></div>
+      </div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="panel">
+        <h2>One consumer, one week, one question</h2>
+        <svg id="weekChart" viewBox="0 0 460 150"></svg>
+        <div class="legend"><span><span class="swatch" style="border-color:var(--benign)"></span>reference week (clean by construction)</span></div>
+        <svg id="queryChart" viewBox="0 0 460 88" style="margin-top:1vh"></svg>
+        <div class="legend"><span><span class="swatch" style="border-color:var(--theft)"></span>query day: original or manipulated?</span></div>
+      </div>
+      <p class="cap">The reference week anchors what “normal” means for this consumer; the detector judges the query day only against that personal baseline.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 ▸ WHY LOCAL LLMs -->
+<section class="slide" id="s3">
+  <div class="eyebrow">Problem · motivation</div>
+  <h1>The frontier exists, but a utility cannot run on it</h1>
+  <div class="cols">
+    <div class="col" style="flex:1">
+      <p class="lede">A zero-shot proprietary model identifies attacks at <strong>0.929 macro-F1</strong> on this task, ahead of supervised classical baselines. Three properties make that operating point impractical for a utility provider:</p>
+      <ul class="clean" style="margin-top:2.2vh">
+        <li><strong>Metered billing.</strong> Every query-day is charged at API rates; the detector's cost scales with the fleet, forever.</li>
+        <li><strong>Data leaves the premises.</strong> Consumption traces are personal data; sending them to an external API is a compliance problem, not an engineering one.</li>
+        <li><strong>No adaptation.</strong> When a new manipulation pattern appears, a closed model cannot be retrained on it.</li>
+      </ul>
+    </div>
+    <div class="col" style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <div class="panel" style="padding:2.4vh 1.6vw">
+        <h2 style="font-size:1.25rem">The question this work answers</h2>
+        <p style="font-family:var(--serif);font-size:1.35rem;line-height:1.4;margin-top:1vh">Can small open-weight models (4B to 31B parameters, fine-tuned locally on one GPU) match that frontier, and what does such a detector cost, tolerate, and explain?</p>
+      </div>
+      <p class="cap">Part 1 covers the setup: the data, the input the model reads, and the output it must produce. Part 2 presents the results.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 ▸ TAXONOMY -->
+<section class="slide" id="s4">
+  <div class="eyebrow">Data · attack taxonomy</div>
+  <h1>Twelve manipulations, four families, drawn as transformations</h1>
+  <p class="lede">Each panel applies the attack's actual transformation to the same normal day (teal). Families: <strong>Z</strong> zero-suppression · <strong>M</strong> multiplicative/randomized · <strong>T</strong> threshold · <strong>S</strong> shape substitution.</p>
+  <div class="tax" id="taxGrid"></div>
+</section>
+
+<!-- 5 ▸ DATASET & SPLIT -->
+<section class="slide" id="s5">
+  <div class="eyebrow">Data · partitioning</div>
+  <h1>One dataset, one split, chosen so nothing leaks</h1>
+  <div class="cols">
+    <div class="col" style="flex:1.15">
+      <svg id="splitFig" viewBox="0 0 520 300"></svg>
+      <p class="cap">Split by <strong>consumer</strong>, never by row: consumption habits are strong identifiers, and a random row-level split would leak consumer identity from train to test, inflating every downstream number.</p>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="kv" style="margin-top:0">
+        <div><div class="n">8,239</div><div class="l">labeled consumer-days</div></div>
+        <div><div class="n">324</div><div class="l">consumers</div></div>
+        <div><div class="n">13</div><div class="l">classes</div></div>
+      </div>
+      <div class="kv">
+        <div><div class="n">6,589</div><div class="l">training days<br>(259 consumers)</div></div>
+        <div><div class="n">1,650</div><div class="l">evaluation days<br>(65 unseen consumers)</div></div>
+      </div>
+      <div class="kv">
+        <div><div class="n">105–130</div><div class="l">eval days per<br>attack class</div></div>
+        <div><div class="n">11.7 : 1</div><div class="l">manipulated : benign<br>in evaluation</div></div>
+      </div>
+      <div class="panel" style="margin-top:2.2vh">
+        <h2>Each row carries</h2>
+        <p style="font-size:.85rem;line-height:1.5">96 readings · ground-truth label · the attack's recorded generation parameters · a <strong>teacher rationale</strong>, written from the readings alone (the label is revealed to the teacher only where its own diagnosis was wrong, ~11% of days).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ▸ INPUT / PROMPT -->
+<section class="slide" id="s6">
+  <div class="eyebrow">Input · what the model reads</div>
+  <h1>The prompt is the meter data, serialized as text</h1>
+  <div class="cols">
+    <div class="col" style="flex:1.45;min-height:0;display:flex;flex-direction:column">
+      <div class="prompt">
+        <div class="seg role"><span class="tag">role + framing</span>You are a domain expert in smart grid security and electricity theft analysis…</div>
+        <div class="seg cat"><span class="tag">attack catalog · 12 entries</span>Attack 6: A random cut-off point is selected and all consumption values above it are replaced by that cut-off value…  <span class="dim">(+11 more)</span></div>
+        <div class="seg stats"><span class="tag">per-day statistics + calendar</span>Day 1: min=12.40, max=41.20, std=6.10, mean=23.70
+Day 1: cal_month=3, dow=0, dom=4   <span class="dim">(× 7 reference days + query day)</span></div>
+        <div class="seg reads"><span class="tag">raw readings · 768 numbers</span>Reference week (7 days, 96 readings/day, 15-min intervals):
+Day 1: 12.40, 11.83, 12.07, 13.51, …
+Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
+        <div class="seg task"><span class="tag">task + output format</span>Determine: (1) attacked or original, (2) which attack, (3) its behavior. Return EXACTLY ONE JSON object…</div>
+      </div>
+      <div class="tokbar" title="approximate share of the ~7,900-token prompt">
+        <div style="width:4%;background:var(--benign)"></div>
+        <div style="width:12%;background:#7A6AA0"></div>
+        <div style="width:6%;background:#B0892B"></div>
+        <div style="width:73%;background:var(--theft)"></div>
+        <div style="width:5%;background:#4E7A3A"></div>
+      </div>
+      <p class="cap">≈7,900 tokens per day, and roughly three-quarters of them are the raw numbers themselves.</p>
+    </div>
+    <div class="col" style="flex:1">
+      <ul class="clean">
+        <li><strong>No feature engineering.</strong> Beyond the summary statistics and calendar fields shown, the model receives the raw readings: 96 values × (7 reference days + the query day) = <strong>768 numbers</strong>.</li>
+        <li><strong>Text only.</strong> No images, no embeddings; the serialized numbers are the entire evidence.</li>
+        <li><strong>Training sees answers, never prompts as targets.</strong> Loss is computed on the answer tokens only, so no capacity is spent reproducing the numeric input.</li>
+        <li><strong>Catalog in, or catalog out.</strong> The 12 attack descriptions sit in the prompt for classification runs; the explanation study later removes them to force the knowledge into the weights.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 7 ▸ OUTPUT -->
+<section class="slide" id="s7">
+  <div class="eyebrow">Output · what the model must produce</div>
+  <h1>One structured answer: verdict, mechanism, explanation</h1>
+  <div class="cols">
+    <div class="col" style="flex:1.3">
+<div class="code">{
+  <span class="k">"classification"</span>: <span class="v">"original" | "manipulated"</span>,
+  <span class="k">"identified_attack"</span>: {
+    <span class="k">"most_likely"</span>: <span class="v">"attack0" … "attack13"</span> <span class="c">· null if original</span>,
+    <span class="k">"confidence"</span>: <span class="v">"High" | "Medium" | "Low"</span>,
+    <span class="k">"reasoning"</span>: <span class="v">why this attack, why the alternatives were ruled out</span>
+  },
+  <span class="k">"attack_behavior_explanation"</span>: {
+    <span class="k">"manipulation_relative_to_normal"</span>: <span class="v">…</span>,
+    <span class="k">"impact_on_magnitude_and_trend"</span>: <span class="v">…</span>,
+    <span class="k">"possible_technical_causes"</span>: <span class="v">…</span>
+  }
+}</div>
+      <p class="cap">A later variant appends a magnitude block: the estimated fraction of energy removed and the manipulated time window.</p>
+    </div>
+    <div class="col" style="flex:1">
+      <ul class="clean">
+        <li><strong>Deterministic decoding.</strong> The model generates greedily; the answer is parsed for scoring. Across every run and training size in the paper, the format parse rate is <strong>100%</strong> — zero violations.</li>
+        <li><strong>A label alone breaks AUC.</strong> Threshold metrics need a probability. With the output held fixed up to the classification field, the model's own probabilities for the two class words are renormalized into p(manipulated), restoring AUC without changing any prediction.</li>
+        <li><strong>Explanations are graded.</strong> ROUGE-L against the teacher rationale, and (stricter) whether the stated attack parameter is numerically correct: five attacks have a single recorded value, n = 610 evaluation days.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 8 ▸ REAL EXAMPLE -->
+<section class="slide" id="s8">
+  <div class="eyebrow">A real evaluation day · attack 6</div>
+  <h1>The model reads the cut-off from the profile itself</h1>
+  <div class="cols">
+    <div class="col" style="flex:1.15">
+      <div class="panel">
+        <svg id="exampleChart" viewBox="0 0 520 210"></svg>
+        <div class="legend">
+          <span><span class="swatch" style="border-color:var(--benign)"></span>typical reference profile</span>
+          <span><span class="swatch" style="border-color:var(--theft)"></span>query day</span>
+          <span><span class="swatch" style="border-color:#B0892B;border-top-style:dashed"></span>cut-off</span>
+        </div>
+      </div>
+      <p class="cap">Injected ground truth for this day (recorded at generation, hidden from the model): <span class="mono">cut-off = 27.7541 Wh</span>. Peaks above the cut-off are flattened onto it; everything below passes through untouched.</p>
+    </div>
+    <div class="col" style="flex:1">
+      <h2>The fine-tuned 8B model's actual output</h2>
+      <p class="quote">“The query day profile closely follows the normal consumption pattern of the reference week, except for a specific contiguous window from index 27 to 38 where the consumption is artificially capped. Within this window, all values are exactly 27.8 Wh, whereas normal historical values for this period typically range between 30.6 and 41.3 Wh. This flattening of peaks while leaving below-threshold values unchanged perfectly matches Attack 6… The cut-off threshold parameter is clearly identifiable as 27.8.”</p>
+      <div style="margin-top:1.6vh">
+        <span class="chip ok">verdict: manipulated ✓</span>
+        <span class="chip ok">mechanism: attack 6 ✓</span>
+        <span class="chip ok">stated 27.8 vs true 27.75 ✓</span>
+      </div>
+      <p class="cap">Nothing in the prompt names this day's parameter. The model recovered it from the readings, the behavior the explanation study later quantifies across all 610 parameterized evaluation days.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 ▸ CLOSER -->
+<section class="slide" id="s9">
+  <div class="eyebrow">Next</div>
+  <h1>Part 2 — what happens when you train it</h1>
+  <div class="cols">
+    <div class="col" style="flex:1;display:flex;flex-direction:column;justify-content:center">
+      <ul class="clean" style="font-size:1rem">
+        <li>Seven open models screened under one frozen recipe — do any match the 0.929 zero-shot frontier?</li>
+        <li>How many labeled days the result actually needs, and where a $0 classical model wins.</li>
+        <li>Attacks the model never saw in training, and what its failures share.</li>
+        <li>Explanations and magnitude estimates, graded against ground truth.</li>
+        <li>The deployment frontier: what to run, where, at what cost per thousand meter-days.</li>
+      </ul>
+    </div>
+    <div class="col" style="flex:1;display:flex;align-items:center">
+      <svg id="closerCurve" viewBox="0 0 460 190" style="opacity:.95"></svg>
+    </div>
+  </div>
+</section>
+
+<div class="meter" id="meter"></div>
+<div class="pageno" id="pageno"></div>
+<div class="footnote">Altamimi et al. · energy-theft detection with fine-tuned open LLMs</div>
+
+<script>
+/* ---------- deterministic load-profile engine (no Math.random) ---------- */
+function lcg(seed){let s=seed>>>0;return()=>((s=(1664525*s+1013904223)>>>0)/4294967296)}
+function base(i){ // double-peak residential day, Wh per 15 min
+  const morning=14*Math.exp(-((i-30)**2)/(2*6.5**2));
+  const evening=22*Math.exp(-((i-76)**2)/(2*8**2));
+  const wig=1.6*Math.sin(i*0.55)+1.1*Math.sin(i*0.23+2);
+  return 8+morning+evening+wig;
+}
+const BASE=[...Array(96)].map((_,i)=>base(i));
+const MEAN=BASE.reduce((a,b)=>a+b,0)/96;
+function poly(vals,w,h,ymax,x0=0,y0=0){
+  return vals.map((v,i)=>`${(x0+i*(w/95)).toFixed(1)},${(y0+h-h*Math.min(v,ymax)/ymax).toFixed(1)}`).join(" ");
+}
+/* the 12 attacks as real transformations of BASE */
+const rnd3=lcg(7),rnd5=lcg(11),rnd13=lcg(5);
+const A3=BASE.map(v=>v*(0.15+0.75*rnd3()));
+const A5=BASE.map(_=>MEAN*(0.05+0.9*rnd5()));
+const MASK13=[...Array(96)].map(()=>rnd13()<0.45);
+const low=BASE.map((v,i)=>3+4*Math.exp(-((i-80)**2)/(2*10**2))+0.6*Math.sin(i*0.5));
+const ATTACKS=[
+ ["attack0","Z","all samples set to zero for the whole day",BASE.map(_=>0.001)],
+ ["attack1","M","all samples × one random factor ∈ (0,1)",BASE.map(v=>v*0.45)],
+ ["attack2","Z","a random contiguous window zeroed (on–off)",BASE.map((v,i)=>(i>=30&&i<=52)?0.001:v)],
+ ["attack3","M","each sample × its own random factor",A3],
+ ["attack4","M","readings reduced inside a random sub-period",BASE.map((v,i)=>(i>=60&&i<=88)?v*0.3:v)],
+ ["attack5","M","each sample ← mean consumption × random",A5],
+ ["attack6","T","values above a random cut-off clipped to it",BASE.map(v=>Math.min(v,17))],
+ ["attack7","T","a cut-off subtracted; negatives to zero",BASE.map(v=>Math.max(v-11,0.001))],
+ ["attack9","S","every sample ← the day's average (flat)",BASE.map(_=>MEAN)],
+ ["attack10","S","the daily pattern reversed in time",[...BASE].reverse()],
+ ["attack12","S","a lower-consuming user's profile substituted",low],
+ ["attack13","Z","each interval: true value or zero",BASE.map((v,i)=>MASK13[i]?0.001:v)],
+];
+/* ---------- taxonomy grid ---------- */
+const grid=document.getElementById("taxGrid");
+for(const[name,fam,mech,vals]of ATTACKS){
+  const c=document.createElement("div");c.className="cell";
+  c.innerHTML=`<div class="hd"><span class="nm">${name}</span><span class="fam">${fam}</span></div>
+  <svg viewBox="0 0 200 52" style="flex:1;min-height:0">
+    <polyline points="${poly(BASE,200,48,42,0,2)}" fill="none" stroke="var(--benign)" stroke-width="1.4" opacity=".45"/>
+    <polyline points="${poly(vals,200,48,42,0,2)}" fill="none" stroke="var(--theft)" stroke-width="1.7"/>
+  </svg><div class="mech">${mech}</div>`;
+  grid.appendChild(c);
+}
+/* ---------- title + closer curves ---------- */
+(function(){
+  const svg=document.getElementById("titleCurve");
+  const q=BASE.map((v,i)=>(i>=56&&i<=88)?Math.min(v,13):v);
+  svg.innerHTML=`<polyline points="${poly(BASE,960,100,42,0,5)}" fill="none" stroke="var(--benign)" stroke-width="2" opacity=".55"/>
+  <polyline points="${poly(q,960,100,42,0,5)}" fill="none" stroke="var(--theft)" stroke-width="2.2"/>`;
+  const c=document.getElementById("closerCurve");
+  c.innerHTML=`<polyline points="${poly(BASE,460,170,42,0,10)}" fill="none" stroke="var(--benign)" stroke-width="2.4" opacity=".5"/>
+  <polyline points="${poly(BASE.map(v=>Math.min(v,17)),460,170,42,0,10)}" fill="none" stroke="var(--theft)" stroke-width="2.6"/>`;
+})();
+/* ---------- slide 2: reference week + query day ---------- */
+(function(){
+  const wk=document.getElementById("weekChart");let parts="";
+  for(let d=0;d<7;d++){
+    const r=lcg(20+d);const day=BASE.map(v=>v*(0.82+0.36*r()));
+    const x0=d*66;parts+=`<polyline points="${poly(day,60,110,46,x0,20)}" fill="none" stroke="var(--benign)" stroke-width="1.3"/>
+    <text x="${x0+30}" y="146" text-anchor="middle" font-size="9" fill="#9AA7AD" font-family="var(--mono)">d${d+1}</text>`;
+  }
+  wk.innerHTML=`<text x="0" y="11" font-size="9" fill="#9AA7AD" font-family="var(--mono)">Wh / 15 min</text>`+parts;
+  const q=document.getElementById("queryChart");
+  const qd=BASE.map((v,i)=>(i>=28&&i<=40)?Math.min(v,15):v*0.98);
+  q.innerHTML=`<rect x="${28*(440/95)+10}" y="4" width="${12*(440/95)}" height="72" fill="var(--theft-soft)"/>
+  <polyline points="${poly(qd,440,72,46,10,4)}" fill="none" stroke="var(--theft)" stroke-width="1.8"/>
+  <text x="452" y="76" text-anchor="end" font-size="9" fill="#9AA7AD" font-family="var(--mono)">interval 0–95</text>`;
+})();
+/* ---------- slide 5: split diagram ---------- */
+(function(){
+  const svg=document.getElementById("splitFig");const r=lcg(3);let dots="";
+  // 324 consumers as an 18x18 dot field; last ~65 highlighted as eval
+  const cols=27,n=324,evalN=65;
+  for(let i=0;i<n;i++){
+    const cx=18+(i%cols)*13.2,cy=26+Math.floor(i/cols)*13.2;
+    const isEval=i>=n-evalN;
+    dots+=`<circle cx="${cx}" cy="${cy}" r="3.4" fill="${isEval?"var(--theft)":"var(--benign)"}" opacity="${isEval?.95:.5}"/>`;
+  }
+  svg.innerHTML=`
+   <text x="18" y="12" font-size="11" fill="var(--muted)" font-family="var(--sans)">324 consumers, split once, by consumer</text>
+   ${dots}
+   <line x1="18" y1="196" x2="380" y2="196" stroke="var(--line)"/>
+   <text x="18" y="236" font-size="12" fill="var(--benign)" font-family="var(--sans)"><tspan font-size="20" font-family="var(--serif)">259 consumers</tspan>  →  6,589 training days</text>
+   <text x="18" y="266" font-size="12" fill="var(--theft)" font-family="var(--sans)"><tspan font-size="20" font-family="var(--serif)">65 consumers</tspan>  →  1,650 evaluation days</text>
+   <text x="18" y="288" font-size="10.5" fill="var(--muted)" font-family="var(--sans)">no consumer appears on both sides: the eval consumers are entirely unseen</text>`;
+})();
+/* ---------- slide 8: attack6 example ---------- */
+(function(){
+  const svg=document.getElementById("exampleChart");
+  const CUT=27.75;
+  const ex=BASE.map((v,i)=>10+ (i>=25&&i<=40? 22+9*Math.exp(-((i-32)**2)/14):0) + 12*Math.exp(-((i-75)**2)/90)+1.2*Math.sin(i*.5));
+  const ref=ex; const q=ex.map(v=>Math.min(v,CUT));
+  const H=170,W=490,YM=46,x0=20,y0=8;
+  const capY=y0+H-H*CUT/YM;
+  svg.innerHTML=`
+   <text x="${x0-2}" y="${y0+2}" font-size="9" fill="#9AA7AD" font-family="var(--mono)">Wh / 15 min</text>
+   <rect x="${x0+25*(W/95)}" y="${y0}" width="${(40-25)*(W/95)}" height="${H}" fill="var(--theft-soft)" opacity=".55"/>
+   <line x1="${x0}" y1="${capY}" x2="${x0+W}" y2="${capY}" stroke="#B0892B" stroke-width="1.6" stroke-dasharray="6 4"/>
+   <text x="${x0+W}" y="${capY-6}" text-anchor="end" font-size="10" fill="#B0892B" font-family="var(--mono)">27.8 Wh</text>
+   <polyline points="${poly(ref,W,H,YM,x0,y0)}" fill="none" stroke="var(--benign)" stroke-width="1.8" opacity=".5"/>
+   <polyline points="${poly(q,W,H,YM,x0,y0)}" fill="none" stroke="var(--theft)" stroke-width="2.2"/>
+   <text x="${x0+32*(W/95)}" y="${y0+H+22}" text-anchor="middle" font-size="10" fill="var(--theft)" font-family="var(--mono)">intervals 27–38: peaks flattened onto the cut-off</text>`;
+})();
+/* ---------- deck navigation + 96-tick meter ---------- */
+const slides=[...document.querySelectorAll(".slide")];
+const meter=document.getElementById("meter");
+for(let i=0;i<96;i++){meter.appendChild(document.createElement("i"))}
+const ticks=[...meter.children];
+let cur=Math.max(0,Math.min(slides.length-1,(parseInt(location.hash.slice(1))||1)-1));
+function show(n){
+  cur=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,i)=>s.classList.toggle("active",i===cur));
+  const filled=Math.round((cur+1)/slides.length*96);
+  ticks.forEach((t,i)=>t.classList.toggle("on",i<filled));
+  document.getElementById("pageno").textContent=`${cur+1} / ${slides.length}`;
+  history.replaceState(null,"","#"+(cur+1));
+}
+addEventListener("keydown",e=>{
+  if(["ArrowRight","PageDown"," "].includes(e.key)){show(cur+1);e.preventDefault()}
+  if(["ArrowLeft","PageUp"].includes(e.key)){show(cur-1);e.preventDefault()}
+  if(e.key==="Home")show(0); if(e.key==="End")show(slides.length-1);
+});
+addEventListener("click",e=>{if(!e.target.closest("a"))show(cur+(e.clientX>innerWidth/2?1:-1))});
+addEventListener("hashchange",()=>{const n=(parseInt(location.hash.slice(1))||1)-1;if(n!==cur)show(n)});
+show(cur);
+</script>
+</body>
+</html>
