@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Energy-Theft Detection with Fine-Tuned Open LLMs — Part 1</title>
+<title>Energy-Theft Detection with Fine-Tuned Open LLMs</title>
 <style>
   :root{
     --paper:#FBFBF9; --panel:#F2F4F1; --ink:#1C2B33; --muted:#5C6E78;
@@ -94,6 +94,18 @@
   .tagchip.att{background:var(--theft-soft);color:var(--theft)}
   .schemabar{display:flex;gap:1.2vw;font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:1.6vh;padding:0 1vw}
   .schemabar span:nth-child(1){flex:0 0 15vw}.schemabar span:nth-child(2){flex:0 0 13.5vw}.schemabar span:nth-child(3){flex:1;padding-left:1vw}
+  /* experiment slides */
+  .exprow{display:flex;gap:1.5vw;flex:1;min-height:0;margin-top:1.6vh;align-items:stretch}
+  .diag{background:#fff;border:1px solid var(--grid);border-radius:8px;padding:1vh .8vw;display:flex;flex-direction:column;justify-content:center}
+  .dcap{font-size:.68rem;color:var(--muted);margin-top:.6vh;line-height:1.4}
+  .setupcard{background:var(--panel);border:1px solid var(--grid);border-radius:8px;padding:.4vh .9vw 1vh;font-size:.73rem;line-height:1.5}
+  .setupcard dt{font-family:var(--mono);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--theft);margin-top:1vh}
+  .setupcard dd{margin:0;color:var(--ink)}
+  .resnums{display:flex;gap:1.5vw;flex-wrap:wrap;margin-top:.4vh}
+  .resnums div{min-width:6.2rem}
+  .resnums .n{font-family:var(--serif);font-size:1.5rem;line-height:1}
+  .resnums .l{font-size:.68rem;color:var(--muted);margin-top:.18rem;line-height:1.3}
+  .finding{font-size:.84rem;line-height:1.5;border-left:3px solid var(--benign);padding-left:.9vw;margin-top:1.2vh}
   .titlewrap{margin:auto 0;max-width:64vw}
   .title-authors{margin-top:2.4vh;font-size:.95rem;color:var(--muted)}
   .title-part{font-family:var(--mono);font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--theft);margin-top:3vh}
@@ -109,7 +121,7 @@
     <h1 style="font-size:2.9rem">Fine-Tuned Open-Weight Language Models for Explainable Energy-Theft Detection</h1>
     <p class="lede" style="margin-top:1vh">Accuracy, generalization, and deployment cost</p>
     <div class="title-authors">Emran Altamimi · Abdulaziz Al-Ali · Abdulla K. Al-Ali · Qutaibah M. Malluhi</div>
-    <div class="title-part">Part 1 · the problem, the data, and the model interface</div>
+    <div class="title-part">The problem · the data · the model interface · the experiments and results</div>
   </div>
   <div style="position:absolute;left:5vw;right:5vw;bottom:12vh;opacity:.9"><svg id="titleCurve" viewBox="0 0 960 110" preserveAspectRatio="none" style="height:110px"></svg></div>
   <div class="hint">→ / ← to navigate</div>
@@ -344,21 +356,196 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
   </div>
 </section>
 
-<!-- 9 ▸ CLOSER -->
-<section class="slide" id="s9">
-  <div class="eyebrow">Next</div>
-  <h1>Part 2 — what happens when you train it</h1>
+<!-- 10 ▸ DIVIDER: EXPERIMENT CHAIN -->
+<section class="slide" id="s10">
+  <div class="eyebrow">The experiments</div>
+  <h1>One screening pass selects the model; every later experiment stresses it</h1>
+  <p class="lede">Seven candidates are trained once under a frozen recipe. A rule fixed beforehand picks the flagship (best) and the workhorse (smallest statistically tied). All further training runs on the workhorse; two analyses re-use its predictions; the frontier prices everything.</p>
+  <div class="diag" style="flex:1;margin-top:1.6vh"><svg id="chainFig" viewBox="0 0 960 300"></svg></div>
+</section>
+
+<!-- 11 ▸ E1 SCREENING -->
+<section class="slide" id="s11">
+  <div class="eyebrow">Experiment 1 · screening · RQ1</div>
+  <h1>Can fine-tuned open models match the zero-shot frontier?</h1>
+  <p class="lede">The frontier is API-bound: billed per query-day, data off-premises, no retraining. Whether local 4–31B models reach it decides if anything downstream is worth building.</p>
+  <div class="exprow">
+    <div class="diag" style="flex:1.25"><svg id="e1chart" viewBox="0 0 520 240"></svg>
+      <div class="dcap" style="font-size:.68rem;color:var(--muted);margin-top:.4vh">Zero-shot → fine-tuned macro-F1 per model; dashed: Gemini 3.1 Pro (zero-shot); dotted: random forest.</div></div>
+    <div style="flex:.85"><dl class="setupcard">
+      <dt>models</dt><dd>Qwen3-8B/14B · Phi-4-reasoning · Ministral-3-14B · Llama-3.1-8B · Gemma-4-E4B/31B</dd>
+      <dt>recipe, frozen for all</dt><dd>LoRA (DoRA) r=16 α=32, all-linear, 1 epoch, lr 2e-4; 31B in 4-bit</dd>
+      <dt>conditions</dt><dd>zero-shot and fine-tuned, catalog prompt, same 1,650-day slice</dd>
+      <dt>selection rule, fixed beforehand</dt><dd>best macro-F1 = flagship; smallest model with CI on the gap containing zero = workhorse</dd>
+    </dl></div>
+    <div style="flex:1">
+      <div class="resnums">
+        <div><div class="n">0.9331</div><div class="l">flagship Phi-4-reasoning, above Gemini's 0.929</div></div>
+        <div><div class="n">0.9229</div><div class="l">workhorse Qwen3-8B, tied: CI [−.023, +.002]</div></div>
+        <div><div class="n">0.9122</div><div class="l">random forest, same split, ~$0 inference</div></div>
+      </div>
+      <p class="finding">Zero-shot, the open bases collapse (best 0.5927; most near 0), so fine-tuning does the work. The forest ties the workhorse on identification (p = 0.204); the workhorse's surviving edge is specificity, 0.892 vs 0.715 (p &lt; 1e-4), which halves false alarms. Accuracy alone justifies the LLM only weakly; the rest of the experiments answer what else it provides.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12 ▸ E2 DATA CURVE -->
+<section class="slide" id="s12">
+  <div class="eyebrow">Experiment 2 · data efficiency · RQ2</div>
+  <h1>How many labeled days does that result cost?</h1>
+  <p class="lede">Annotated theft days are the scarcest resource a utility has; a frontier match that needs tens of thousands of them would be unusable.</p>
+  <div class="exprow">
+    <div class="diag" style="flex:1.25"><svg id="e2chart" viewBox="0 0 520 240"></svg>
+      <div class="dcap">Macro-F1 vs training days (log-x). The forest and CatBoost train on the identical class-stratified subsets.</div></div>
+    <div style="flex:.85"><dl class="setupcard">
+      <dt>model</dt><dd>workhorse only, same recipe, retrained from the base at each size</dd>
+      <dt>grid</dt><dd>65 / 260 / 1,040 days (3 data seeds at the two smallest) and the full 6,589</dd>
+      <dt>baselines</dt><dd>random forest, CatBoost, XGBoost on the identical subsets</dd>
+      <dt>cost basis</dt><dd>H100 at $2.50/h; the trees train in CPU-minutes</dd>
+    </dl></div>
+    <div style="flex:1">
+      <div class="resnums">
+        <div><div class="n">81%</div><div class="l">of full performance at 80 labels/class ($2.07)</div></div>
+        <div><div class="n">$13.08</div><div class="l">the full 6,589-day fine-tune, 5.23 GPU-h</div></div>
+        <div><div class="n">0.745</div><div class="l">forest macro-F1 at 65 days vs workhorse 0.259</div></div>
+      </div>
+      <p class="finding">Every classical variant dominates until labels are plentiful; the low-label regime belongs to them outright. Inside the workhorse, AUC reaches 0.887 at 65 days while specificity sits at 0.008: labeled data buys the output format first, the taxonomy second, and the decision threshold last.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 13 ▸ E3 ROTATIONS -->
+<section class="slide" id="s13">
+  <div class="eyebrow">Experiment 3 · unseen attack families · RQ3</div>
+  <h1>Does detection survive attacks absent from training?</h1>
+  <p class="lede">Deployed detectors will face manipulations that postdate their training catalog; an evaluation that only shows trained attacks cannot say what happens then.</p>
+  <div class="exprow">
+    <div class="diag" style="flex:1.2"><svg id="e3fig" viewBox="0 0 520 250"></svg>
+      <div class="dcap">Four retrainings; shaded attacks are removed from training and form the evaluation set (plus all 130 benign days). Their catalog descriptions remain in the prompt.</div></div>
+    <div style="flex:.85"><dl class="setupcard">
+      <dt>rotations</dt><dd>R-Z (0, 2, 13) · R-M (1, 3, 4, 5) · R-T (6, 7) · R-S (9, 10, 12)</dd>
+      <dt>model</dt><dd>workhorse, same recipe, retrained per rotation</dd>
+      <dt>classical control</dt><dd>random forest retrained on the identical reduced sets, same eval days</dd>
+    </dl></div>
+    <div style="flex:1">
+      <div class="resnums">
+        <div><div class="n">10 / 12</div><div class="l">never-seen attacks detected at recall ≥ 0.85 (five at 1.000)</div></div>
+        <div><div class="n">0.000</div><div class="l">identification accuracy on held-out attacks (attack2 alone partially recovers from its description)</div></div>
+      </div>
+      <p class="finding">Specificity is preserved in every rotation (0.869–0.938), so the transfer is not bought with false alarms. The two failures, attack4 (0.437) and attack10 (0.269), both barely move the day's energy. The forest fails elsewhere: it catches the time reversal at 0.862 where the workhorse reads 0.269, and misses the clipping at 0.754 where the workhorse holds 0.992. The two detector families cover each other's blind spots.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 14 ▸ E4 SEVERITY -->
+<section class="slide" id="s14">
+  <div class="eyebrow">Experiment 4 · severity · RQ4</div>
+  <h1>What governs the failures: attack type, or stolen energy?</h1>
+  <p class="lede">The two rotation failures came from different families but shared one property, barely any energy removed. If that property is the real axis, it should organize every model's errors.</p>
+  <div class="exprow">
+    <div class="diag" style="flex:1.25"><svg id="e4chart" viewBox="0 0 520 240"></svg>
+      <div class="dcap">Detection recall by severity bucket; detached markers: the energy-neutral pair (total unchanged, profile reshaped).</div></div>
+    <div style="flex:.85"><dl class="setupcard">
+      <dt>stratifier</dt><dd>ρ = 1 − E_query / Ē_reference-week, the fraction of expected energy removed</dd>
+      <dt>buckets</dt><dd>&lt;10% · 10–30% · 30–60% · &gt;60%; benign week-to-week variation spans −0.20 to +0.18, so the 30% edge sits outside it</dd>
+      <dt>data</dt><dd>screening predictions restratified; no new training</dd>
+    </dl></div>
+    <div style="flex:1">
+      <div class="resnums">
+        <div><div class="n">1.000</div><div class="l">recall above 60% removal, every fine-tuned model</div></div>
+        <div><div class="n">0.971</div><div class="l">best-model recall below 10%, where the whole gradient lives</div></div>
+        <div><div class="n">0.95+</div><div class="l">on the energy-neutral pair, invisible to any energy criterion</div></div>
+      </div>
+      <p class="finding">Detectors fail along the severity axis rather than by attack family. Theft large enough to matter financially is caught essentially always; the residual risk is confined to manipulations inside a consumer's ordinary variation, and even there the best models hold 0.97.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 15 ▸ E5 RATIONALE -->
+<section class="slide" id="s15">
+  <div class="eyebrow">Experiment 5 · rationale distillation · RQ5</div>
+  <h1>Can the detector say what happened, and at what cost?</h1>
+  <p class="lede">A flag dispatches an inspector; the inspector needs the mechanism. The forest detects but cannot explain, so this capability is where the two detectors stop being interchangeable.</p>
+  <div class="exprow">
+    <div class="diag" style="flex:1.25"><svg id="e5fig" viewBox="0 0 520 250"></svg>
+      <div class="dcap">Teacher rationales are written label-blind; the label is revealed and the rationale regenerated only where the teacher misdiagnosed (~11% of days). R0 and R1 differ only in whether the rationale enters the training target.</div></div>
+    <div style="flex:.85"><dl class="setupcard">
+      <dt>variants</dt><dd>R0: label-only target · R1: rationale + label target; both on all 6,589 days</dd>
+      <dt>prompt</dt><dd>catalog-free, so explanations must be grounded in the readings and the weights, never paraphrased from the catalog</dd>
+      <dt>graded by</dt><dd>ROUGE-L vs teacher; stated attack parameter vs the recorded injection value (n = 610)</dd>
+    </dl></div>
+    <div style="flex:1">
+      <div class="resnums">
+        <div><div class="n">−0.016</div><div class="l">macro-F1 cost of the rationale target (CI excludes 0); binary detection unchanged</div></div>
+        <div><div class="n">79.8%</div><div class="l">correct stated attack parameter: 98.5% where readable off the profile, 37.1% where it must be inferred</div></div>
+      </div>
+      <p class="finding">Explanations carry a small, real identification cost and no detection cost. Fidelity is 0.46 on days the teacher diagnosed unaided and 0.38 on its fallback days, in every full-data run: the student struggles exactly where the teacher did.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 16 ▸ E6 MAGNITUDE -->
+<section class="slide" id="s16">
+  <div class="eyebrow">Experiment 6 · magnitude · RQ5</div>
+  <h1>Can it also say how much was stolen?</h1>
+  <p class="lede">Recovery billing needs the size of the theft, not only its name. The magnitude block extends the same structured output: estimated fraction of energy removed, plus the manipulated window.</p>
+  <div class="exprow">
+    <div class="diag" style="flex:1.25"><svg id="e6chart" viewBox="0 0 520 240"></svg>
+      <div class="dcap">Mean absolute error on the energy-reduction fraction, against per-day controls and the reading-level ceiling.</div></div>
+    <div style="flex:.85"><dl class="setupcard">
+      <dt>model</dt><dd>workhorse retrained with the magnitude block appended to the output</dd>
+      <dt>controls</dt><dd>class-prior lookup (predicted and gold class) · ridge on readings · GBM on readings</dd>
+      <dt>interference check</dt><dd>classification vs the plain workhorse, specified before the run</dd>
+    </dl></div>
+    <div style="flex:1">
+      <div class="resnums">
+        <div><div class="n">0.032</div><div class="l">MAE; Spearman 0.976; window IoU 0.874</div></div>
+        <div><div class="n">2.8×</div><div class="l">better than the class-prior lookup (CI excludes 0)</div></div>
+        <div><div class="n">27×</div><div class="l">worse than a GBM reading the same values: the honest ceiling</div></div>
+      </div>
+      <p class="finding">The estimates are genuine per-day measurements, and carrying the extra target costs classification nothing (Δ +0.006, CI spans 0). For magnitude in isolation a dedicated regressor wins; the value is one answer that detects, names, sizes, and locates at once.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 17 ▸ E7 FRONTIER -->
+<section class="slide" id="s17">
+  <div class="eyebrow">Experiment 7 · deployment frontier · RQ6</div>
+  <h1>What should a utility actually run?</h1>
+  <p class="lede">Accuracy, cost, and per-flag content priced together, at assumed rates: local H100 amortized at $2.50/h, API at $5 per million tokens.</p>
+  <div class="exprow">
+    <div class="diag" style="flex:1.25"><svg id="e7chart" viewBox="0 0 520 240"></svg>
+      <div class="dcap">Identification quality vs inference cost per 1,000 query-days (log-x). The step line joins the Pareto-optimal points; the star is the cascade.</div></div>
+    <div style="flex:.85"><dl class="setupcard">
+      <dt>operating points</dt><dd>forest on CPU · fine-tuned models local · Gemini 3.1 Pro via API</dd>
+      <dt>cascade</dt><dd>forest screens every day at ~$0; the workhorse adjudicates flagged days only</dd>
+    </dl></div>
+    <div style="flex:1">
+      <div class="resnums">
+        <div><div class="n">$7.48</div><div class="l">workhorse per 1,000 query-days; API 4.3× the price for 0.006 more macro-F1</div></div>
+        <div><div class="n">523</div><div class="l">query-days to repay the $13.08 fine-tune vs the API</div></div>
+        <div><div class="n">$6.92</div><div class="l">cascade per 1,000 days at 0.9114 macro-F1</div></div>
+      </div>
+      <p class="finding">The front runs forest → workhorse → flagship; the API and the 31B model sit strictly inside it. The two detectors resolve as complements: the free screen filters, and every flag the LLM adjudicates arrives explained, sized, and localized.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 18 ▸ CLOSER -->
+<section class="slide" id="s18">
+  <div class="eyebrow">In summary</div>
+  <h1>Findings at a glance</h1>
   <div class="cols">
     <div class="col" style="flex:1;display:flex;flex-direction:column;justify-content:center">
-      <ul class="clean" style="font-size:1rem">
-        <li>Seven open models screened under one frozen recipe — do any match the 0.929 zero-shot frontier?</li>
-        <li>How many labeled days the result actually needs, and where a $0 classical model wins.</li>
-        <li>Attacks the model never saw in training, and what its failures share.</li>
-        <li>Explanations and magnitude estimates, graded against ground truth.</li>
-        <li>The deployment frontier: what to run, where, at what cost per thousand meter-days.</li>
+      <ul class="clean" style="font-size:.98rem">
+        <li>An 8–14B model fine-tuned locally for $13 matches the zero-shot proprietary frontier on the same split.</li>
+        <li>Below full data, classical models dominate; the low-label regime belongs to them.</li>
+        <li>Detection survives unseen attack families wherever meaningful energy moves; failures are governed by severity, and the two detector families miss different attacks.</li>
+        <li>Explanations cost 1.6 macro-F1 points and no detection; stated attack parameters check out against injected ground truth on 79.8% of parameterized days.</li>
+        <li>The deployable answer is a cascade: the free classical screen in front, the workhorse converting each flag into an explained, quantified finding.</li>
       </ul>
     </div>
-    <div class="col" style="flex:1;display:flex;align-items:center">
+    <div class="col" style="flex:.8;display:flex;align-items:center">
       <svg id="closerCurve" viewBox="0 0 460 190" style="opacity:.95"></svg>
     </div>
   </div>
@@ -484,6 +671,146 @@ for(const[name,fam,mech,vals]of ATTACKS){
    <polyline points="${poly(ref,W,H,YM,x0,y0)}" fill="none" stroke="var(--benign)" stroke-width="1.8" opacity=".5"/>
    <polyline points="${poly(q,W,H,YM,x0,y0)}" fill="none" stroke="var(--theft)" stroke-width="2.2"/>
    <text x="${x0+32*(W/95)}" y="${y0+H+22}" text-anchor="middle" font-size="10" fill="var(--theft)" font-family="var(--mono)">intervals 27–38: peaks flattened onto the cut-off</text>`;
+})();
+/* ---------- experiment slides: charts + diagrams (committed numbers) ---------- */
+(function(){
+  const T="var(--theft)",B="var(--benign)",MU="#9AA7AD",GR="#555";
+  const box=(x,y,w,h,txt,fill,stroke)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="7" fill="${fill||"#fff"}" stroke="${stroke||"var(--line)"}"/>`+
+    txt.split("\n").map((t,i)=>`<text x="${x+w/2}" y="${y+h/2+(i-(txt.split("\n").length-1)/2)*13+4}" text-anchor="middle" font-size="10.5" fill="var(--ink)" font-family="var(--sans)">${t}</text>`).join("");
+  const arrow=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${GR}" stroke-width="1.3" marker-end="url(#ah)"/>`;
+  const DEFS=`<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="${GR}"/></marker></defs>`;
+
+  /* chain (divider) */
+  document.getElementById("chainFig").innerHTML=DEFS+
+    box(20,110,190,66,"screening\n7 models · one recipe\nzero-shot + fine-tuned")+
+    box(268,110,175,66,"selection rule\nflagship: best macro-F1\nworkhorse: smallest tied")+
+    box(510,20,180,52,"data curve (RQ2)\n65 → 6,589 days")+
+    box(510,90,180,52,"rotations (RQ3)\nfamilies held out")+
+    box(510,160,180,52,"rationales (RQ5)\nR0 vs R1, catalog-free")+
+    box(510,230,180,52,"magnitude (RQ5)\noutput block appended")+
+    box(760,55,180,58,"severity (RQ4)\npredictions restratified","var(--panel)")+
+    box(760,175,180,58,"frontier (RQ6)\ncost vs accuracy\n+ the cascade","var(--panel)")+
+    arrow(210,143,264,143)+
+    arrow(443,127,506,46)+arrow(443,137,506,116)+arrow(443,148,506,186)+arrow(443,158,506,256)+
+    arrow(690,60,756,78)+arrow(690,120,756,95)+
+    arrow(690,190,756,196)+arrow(690,250,756,215)+
+    `<text x="475" y="292" text-anchor="middle" font-size="10" fill="${MU}" font-family="var(--mono)">workhorse retrained per experiment</text>`;
+
+  /* E1: zero-shot -> fine-tuned dumbbells */
+  (function(){
+    const rows=[["Phi-4-reasoning",.0112,.9331],["Ministral-3-14B",.2434,.9298],["Qwen3-8B",.0112,.9229],
+                ["Llama-3.1-8B",.2098,.9181],["Qwen3-14B",.0271,.9173],["Gemma-4-E4B",.2784,.8878],["Gemma-4-31B",.5927,.8517]];
+    const x=v=>120+v*380, y=i=>26+i*30;
+    let s=`<line x1="${x(.929)}" y1="12" x2="${x(.929)}" y2="228" stroke="${B}" stroke-dasharray="6 4" stroke-width="1.4"/>`+
+          `<line x1="${x(.9122)}" y1="12" x2="${x(.9122)}" y2="228" stroke="#333" stroke-dasharray="2 3" stroke-width="1.2"/>`;
+    rows.forEach((r,i)=>{s+=`<text x="112" y="${y(i)+4}" text-anchor="end" font-size="9.5" fill="var(--ink)" font-family="var(--sans)">${r[0]}</text>
+      <line x1="${x(r[1])}" y1="${y(i)}" x2="${x(r[2])}" y2="${y(i)}" stroke="#C9D0CB" stroke-width="1.6"/>
+      <circle cx="${x(r[1])}" cy="${y(i)}" r="4" fill="${MU}"/><circle cx="${x(r[2])}" cy="${y(i)}" r="4.6" fill="${T}"/>`});
+    s+=`<text x="${x(.929)+4}" y="12" font-size="8.5" fill="${B}" font-family="var(--mono)">Gemini .929</text>
+        <text x="${x(.9122)-4}" y="235" text-anchor="end" font-size="8.5" fill="#333" font-family="var(--mono)">RF .912</text>`;
+    document.getElementById("e1chart").innerHTML=s;
+  })();
+
+  /* E2: data curve */
+  (function(){
+    const N=[65,260,1040,6589],W=[.2588,.3540,.7488,.9229],RF=[.7451,.8321,.8855,.9122],CB=[.7667,.8624,.8915,.9093];
+    const x=n=>60+(Math.log10(n)-Math.log10(65))/(Math.log10(6589)-Math.log10(65))*430, y=v=>210-(v-.2)*250;
+    const line=(vals,c,dash,w)=>`<polyline points="${vals.map((v,i)=>`${x(N[i])},${y(v)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="${w||2}" ${dash?`stroke-dasharray="${dash}"`:""}/>`+
+      vals.map((v,i)=>`<circle cx="${x(N[i])}" cy="${y(v)}" r="3.4" fill="${c}"/>`).join("");
+    let s=line(CB,"#8c8c8c","2 3",1.4)+line(RF,"#444",null,1.8)+line(W,T,null,2.2);
+    N.forEach(n=>{s+=`<text x="${x(n)}" y="228" text-anchor="middle" font-size="9" fill="${MU}" font-family="var(--mono)">${n.toLocaleString()}</text>`});
+    s+=`<text x="60" y="14" font-size="9" fill="${MU}" font-family="var(--mono)">macro-F1</text>
+        <text x="${x(6589)-10}" y="${y(.9229)-10}" text-anchor="end" font-size="9.5" fill="${T}" font-family="var(--mono)">workhorse</text>
+        <text x="${x(65)+10}" y="${y(.7451)-10}" font-size="9.5" fill="#444" font-family="var(--mono)">random forest</text>
+        <text x="${x(260)}" y="${y(.8624)-10}" font-size="9.5" fill="#8c8c8c" font-family="var(--mono)">CatBoost</text>`;
+    document.getElementById("e2chart").innerHTML=s;
+  })();
+
+  /* E3: rotation hold-out matrix */
+  (function(){
+    const cols=["0","1","2","3","4","5","6","7","9","10","12","13"];
+    const held={ "R-Z":["0","2","13"], "R-M":["1","3","4","5"], "R-T":["6","7"], "R-S":["9","10","12"] };
+    const rows=Object.keys(held), x0=70,y0=44,cw=35,ch=40;
+    let s=`<text x="${x0}" y="20" font-size="10" fill="${MU}" font-family="var(--sans)">attack</text>`;
+    cols.forEach((c,j)=>{s+=`<text x="${x0+j*cw+cw/2}" y="${y0-8}" text-anchor="middle" font-size="9.5" fill="${MU}" font-family="var(--mono)">${c}</text>`});
+    rows.forEach((r,i)=>{
+      s+=`<text x="${x0-10}" y="${y0+i*ch+ch/2+4}" text-anchor="end" font-size="10" fill="var(--ink)" font-family="var(--mono)">${r}</text>`;
+      cols.forEach((c,j)=>{
+        const out=held[r].includes(c);
+        s+=`<rect x="${x0+j*cw+2}" y="${y0+i*ch+2}" width="${cw-4}" height="${ch-4}" rx="4" fill="${out?"var(--theft-soft)":"#fff"}" stroke="${out?T:"var(--grid)"}" stroke-width="${out?1.4:1}"/>`;
+        if(out)s+=`<text x="${x0+j*cw+cw/2}" y="${y0+i*ch+ch/2+4}" text-anchor="middle" font-size="9" fill="${T}" font-family="var(--mono)">eval</text>`;
+      });
+    });
+    s+=`<text x="${x0}" y="${y0+4*ch+24}" font-size="9.5" fill="${MU}" font-family="var(--sans)">white cells: trained on · shaded cells: excluded from training, evaluated on</text>`;
+    document.getElementById("e3fig").innerHTML=s;
+  })();
+
+  /* E4: severity curves */
+  (function(){
+    const labs=["<10%","10–30%","30–60%",">60%","energy-neutral"];
+    const S={ "flagship":[.971,1,.998,1,.977], "workhorse":[.957,.990,.998,1,.969], "Gemma-4-31B":[.768,.964,.996,1,.954] };
+    const cols={flagship:B, workhorse:T, "Gemma-4-31B":"#8c8c8c"};
+    const x=i=>70+i*95+(i===4?40:0), y=v=>200-(v-.74)*560;
+    let s="";
+    labs.forEach((l,i)=>{s+=`<text x="${x(i)}" y="224" text-anchor="middle" font-size="9" fill="${MU}" font-family="var(--mono)">${l}</text>`});
+    s+=`<line x1="${x(3)+45}" y1="20" x2="${x(3)+45}" y2="210" stroke="var(--grid)"/>`;
+    for(const k in S){
+      const v=S[k];
+      s+=`<polyline points="${[0,1,2,3].map(i=>`${x(i)},${y(v[i])}`).join(" ")}" fill="none" stroke="${cols[k]}" stroke-width="2"/>`+
+         [0,1,2,3].map(i=>`<circle cx="${x(i)}" cy="${y(v[i])}" r="3.4" fill="${cols[k]}"/>`).join("")+
+         `<rect x="${x(4)-5}" y="${y(v[4])-5}" width="10" height="10" fill="${cols[k]}" transform="rotate(45 ${x(4)} ${y(v[4])})"/>`;
+    }
+    s+=`<text x="70" y="14" font-size="9" fill="${MU}" font-family="var(--mono)">recall</text>
+        <text x="${x(0)+8}" y="${y(.768)+16}" font-size="9.5" fill="#8c8c8c" font-family="var(--mono)">Gemma-4-31B</text>
+        <text x="${x(0)+8}" y="${y(.971)-10}" font-size="9.5" fill="${B}" font-family="var(--mono)">flagship</text>`;
+    document.getElementById("e4chart").innerHTML=s;
+  })();
+
+  /* E5: STaR protocol flow */
+  document.getElementById("e5fig").innerHTML=DEFS+
+    box(14,20,150,54,"readings\nquery day +\nreference week")+
+    box(210,20,160,54,"teacher diagnoses\nand explains\n(label withheld)")+
+    box(210,110,160,44,"diagnosis\ncorrect?")+
+    box(14,110,150,44,"keep rationale\nlabel_blind · 89%","#EAF2EE",B)+
+    box(410,110,100,44,"reveal label,\nregenerate","var(--theft-soft)",T)+
+    box(410,180,100,40,"rationalization\n· 11%","var(--theft-soft)",T)+
+    box(120,190,250,50,"training targets\nR0: label only · R1: rationale + label")+
+    arrow(164,47,206,47)+arrow(290,74,290,106)+
+    arrow(206,132,168,132)+arrow(370,132,406,132)+arrow(460,154,460,176)+
+    arrow(290,154,290,186)+
+    `<text x="185" y="126" font-size="9" fill="${B}" font-family="var(--mono)">yes</text>
+     <text x="382" y="126" font-size="9" fill="${T}" font-family="var(--mono)">no</text>`;
+
+  /* E6: magnitude MAE bars */
+  (function(){
+    const rows=[["GBM on readings (ceiling)",.0012,"#444"],["workhorse (LLM)",.0321,T],
+                ["class-prior, predicted",.0897,MU],["class-prior, gold",.0903,MU],["ridge on readings",.1313,MU]];
+    const x=v=>190+v/0.14*300, y=i=>34+i*42;
+    let s="";
+    rows.forEach((r,i)=>{s+=`<text x="182" y="${y(i)+5}" text-anchor="end" font-size="9.5" fill="var(--ink)" font-family="var(--sans)">${r[0]}</text>
+      <rect x="190" y="${y(i)-9}" width="${Math.max(2,x(r[1])-190)}" height="18" rx="3" fill="${r[2]}" opacity="${r[2]===T?1:.55}"/>
+      <text x="${x(r[1])+6}" y="${y(i)+4}" font-size="9.5" fill="var(--ink)" font-family="var(--mono)">${r[1].toFixed(4)}</text>`});
+    s+=`<text x="190" y="16" font-size="9" fill="${MU}" font-family="var(--mono)">MAE on the energy-reduction fraction (lower is better)</text>`;
+    document.getElementById("e6chart").innerHTML=s;
+  })();
+
+  /* E7: cost-accuracy frontier */
+  (function(){
+    const pts=[["random forest",.01,.9122,T,true,false,12,4,"start"],["cascade",6.92,.9114,T,false,true,0,20,"middle"],
+               ["workhorse",7.48,.9229,T,true,false,-10,4,"end"],["Ministral-3-14B",9.07,.9298,MU,false,false,10,10,"start"],
+               ["flagship",9.07,.9331,T,true,false,-10,-4,"end"],["Gemini (API)",32.5,.929,B,false,false,-2,-10,"end"],
+               ["Gemma-4-31B",33.89,.8517,MU,false,false,-2,-10,"end"]];
+    const x=c=>70+(Math.log10(c)-Math.log10(.01))/(Math.log10(40)-Math.log10(.01))*420, y=v=>205-(v-.84)*1650;
+    let s=`<polyline points="${x(.01)},${y(.9122)} ${x(7.48)},${y(.9122)} ${x(7.48)},${y(.9229)} ${x(9.07)},${y(.9229)} ${x(9.07)},${y(.9331)} ${x(40)},${y(.9331)}" fill="none" stroke="#C9D0CB" stroke-width="1.6"/>`;
+    pts.forEach(p=>{
+      if(p[5]) s+=`<text x="${x(p[1])}" y="${y(p[2])+5}" text-anchor="middle" font-size="15" fill="${T}">★</text>`;
+      else s+=`<circle cx="${x(p[1])}" cy="${y(p[2])}" r="${p[4]?5:4}" fill="${p[3]}" ${p[4]?"":'opacity=".75"'}/>`;
+      s+=`<text x="${x(p[1])+p[6]}" y="${y(p[2])+p[7]}" text-anchor="${p[8]}" font-size="9" fill="var(--ink)" font-family="var(--mono)">${p[0]}</text>`;
+    });
+    [0.01,0.1,1,10].forEach(c=>{s+=`<text x="${x(c)}" y="226" text-anchor="middle" font-size="9" fill="${MU}" font-family="var(--mono)">$${c}</text>`});
+    s+=`<text x="70" y="14" font-size="9" fill="${MU}" font-family="var(--mono)">macro-F1 vs $ / 1,000 query-days</text>`;
+    document.getElementById("e7chart").innerHTML=s;
+  })();
 })();
 /* ---------- deck navigation + 96-tick meter ---------- */
 const slides=[...document.querySelectorAll(".slide")];
