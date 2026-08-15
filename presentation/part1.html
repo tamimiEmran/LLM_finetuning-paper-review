@@ -243,7 +243,7 @@
     <div class="rat"><span class="lbl">rationale</span>“The query day exhibits a consumption profile that fully preserves the typical daily trend… but with uniformly reduced magnitude across all 96 intervals. The peak consumption is 3.3 Wh compared to normal peaks of 6.2–9.6 Wh…”</div>
   </div>
 
-  <p class="cap">Profiles are drawn schematically from each rationale's quoted values (teal: the consumer's normal shape; orange: the row's day). The rationale column is what the teacher wrote from the readings alone; on the ~11% of days where the teacher's own diagnosis was wrong, the label was revealed and the rationale regenerated (<span class="mono">gen_method = rationalization</span>).</p>
+  <p class="cap">Each card draws the row's own day only, schematically, from the rationale's quoted values: teal for a benign day, orange for a manipulated one (the clean reference week travels with every row in the model input but is a set of other days, so it is not shown here). Rows 39 and 33 belong to the same consumer, hence one household shape, intact and then clipped; row 158 is a different, lower-consuming household. The rationale column is what the teacher wrote from the readings alone; on the ~11% of days where the teacher's own diagnosis was wrong, the label was revealed and the rationale regenerated (<span class="mono">gen_method = rationalization</span>).</p>
 </section>
 
 <!-- 6 ▸ INPUT / PROMPT -->
@@ -456,16 +456,17 @@ for(const[name,fam,mech,vals]of ATTACKS){
    <text x="18" y="266" font-size="12" fill="var(--theft)" font-family="var(--sans)"><tspan font-size="20" font-family="var(--serif)">65 consumers</tspan>  →  1,650 evaluation days</text>
    <text x="18" y="288" font-size="10.5" fill="var(--muted)" font-family="var(--sans)">no consumer appears on both sides: the eval consumers are entirely unseen</text>`;
 })();
-/* ---------- slide 5b: example-row sparklines ---------- */
+/* ---------- slide 5b: example-row sparklines (one curve per row: the row's own day) ---------- */
 (function(){
-  const draw=(id,vals,withBase)=>{
-    const el=document.getElementById(id);
-    el.innerHTML=(withBase?`<polyline points="${poly(BASE,220,46,42,0,3)}" fill="none" stroke="var(--benign)" stroke-width="1.3" opacity=".45"/>`:"")+
-      `<polyline points="${poly(vals,220,46,42,0,3)}" fill="none" stroke="${withBase?"var(--theft)":"var(--benign)"}" stroke-width="1.7"/>`;
+  const draw=(id,vals,color,ymax)=>{
+    document.getElementById(id).innerHTML=
+      `<polyline points="${poly(vals,220,46,ymax,0,3)}" fill="none" stroke="${color}" stroke-width="1.7"/>`;
   };
-  draw("ex1",BASE,false);
-  draw("ex2",BASE.map(v=>Math.min(v,17)),true);
-  draw("ex3",BASE.map(v=>v*0.52),true);
+  // consumer 6: a different, lower-consuming household (evening peak ~9 Wh, min ~1.3)
+  const C6=[...Array(96)].map((_,i)=>1.4+7.8*Math.exp(-((i-74)**2)/(2*9**2))+0.5*Math.sin(i*0.5)+0.3*Math.sin(i*0.21+1));
+  draw("ex1",BASE,"var(--benign)",42);                      // row 39: consumer 1, benign day
+  draw("ex2",BASE.map(v=>Math.min(v,17)),"var(--theft)",42); // row 33: consumer 1, attack6 day
+  draw("ex3",C6.map(v=>v*0.52),"var(--theft)",10);           // row 158: consumer 6, attack1 day
 })();
 /* ---------- slide 8: attack6 example ---------- */
 (function(){
