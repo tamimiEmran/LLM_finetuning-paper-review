@@ -275,7 +275,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
       <ul class="clean">
         <li><strong>No feature engineering.</strong> Beyond the summary statistics and calendar fields shown, the model receives the raw readings: 96 values × (7 reference days + the query day) = <strong>768 numbers</strong>.</li>
         <li><strong>Text only.</strong> No images, no embeddings; the serialized numbers are the entire evidence.</li>
-        <li><strong>Training sees answers, never prompts as targets.</strong> Loss is computed on the answer tokens only, so no capacity is spent reproducing the numeric input.</li>
+        <li><strong>Prompt tokens are masked out of the training loss.</strong> Training runs one forward pass over prompt plus answer, and the default language-modeling loss scores the next-token prediction at every position, prompt included. Unmasked, roughly 98% of the gradient would go into predicting the 7,900 numeric prompt tokens; masking them concentrates all learning on the answer.</li>
         <li><strong>Catalog in, or catalog out.</strong> The 12 attack descriptions sit in the prompt for classification runs; the explanation study later removes them to force the knowledge into the weights.</li>
       </ul>
     </div>
