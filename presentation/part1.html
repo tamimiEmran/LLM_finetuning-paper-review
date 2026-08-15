@@ -82,6 +82,18 @@
   ul.clean{list-style:none}
   ul.clean li{padding-left:1.2rem;position:relative;margin-bottom:1vh;font-size:.92rem;line-height:1.45}
   ul.clean li::before{content:"—";position:absolute;left:0;color:var(--theft)}
+  /* example-row cards */
+  .rowcard{display:flex;gap:1.2vw;background:#fff;border:1px solid var(--grid);border-radius:8px;padding:1.1vh 1vw;align-items:center;margin-top:1.2vh}
+  .rowcard .spark{flex:0 0 15vw}
+  .rowcard .meta{flex:0 0 13.5vw;font-family:var(--mono);font-size:.68rem;line-height:1.7;color:var(--muted)}
+  .rowcard .meta b{color:var(--ink);font-weight:600}
+  .rowcard .rat{flex:1;font-size:.76rem;line-height:1.45;color:var(--ink);border-left:2.5px solid var(--grid);padding-left:1vw}
+  .rowcard .rat .lbl{font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:.3vh}
+  .tagchip{display:inline-block;font-family:var(--mono);font-size:.66rem;border-radius:3px;padding:.02rem .4rem}
+  .tagchip.ben{background:var(--benign-soft);color:var(--benign)}
+  .tagchip.att{background:var(--theft-soft);color:var(--theft)}
+  .schemabar{display:flex;gap:1.2vw;font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:1.6vh;padding:0 1vw}
+  .schemabar span:nth-child(1){flex:0 0 15vw}.schemabar span:nth-child(2){flex:0 0 13.5vw}.schemabar span:nth-child(3){flex:1;padding-left:1vw}
   .titlewrap{margin:auto 0;max-width:64vw}
   .title-authors{margin-top:2.4vh;font-size:.95rem;color:var(--muted)}
   .title-part{font-family:var(--mono);font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--theft);margin-top:3vh}
@@ -195,6 +207,43 @@
       </div>
     </div>
   </div>
+</section>
+
+<!-- 5b ▸ EXAMPLE ROWS -->
+<section class="slide" id="s5b">
+  <div class="eyebrow">Data · example rows</div>
+  <h1>Three of the 8,239 rows, verbatim</h1>
+  <p class="lede">Same consumer, different days; then a second consumer under a different attack. Every field except the drawn profile is quoted directly from the dataset.</p>
+  <div class="schemabar"><span>readings (96 × 15-min)</span><span>labels + provenance</span><span>teacher rationale (excerpt)</span></div>
+
+  <div class="rowcard">
+    <div class="spark"><svg id="ex1" viewBox="0 0 220 52"></svg></div>
+    <div class="meta">row_id <b>39</b> · consumer <b>1</b><br>
+      <span class="tagchip ben">original</span><br>
+      gen_method <b>label_blind</b><br>
+      gen_params <b>none</b></div>
+    <div class="rat"><span class="lbl">rationale</span>“…the consumption profile perfectly matches the consumer's typical daily pattern… The quantization steps (e.g., 0.7 Wh increments like 19.9, 20.6, 21.3) are exactly identical to the reference data, confirming it is the same meter.”</div>
+  </div>
+
+  <div class="rowcard">
+    <div class="spark"><svg id="ex2" viewBox="0 0 220 52"></svg></div>
+    <div class="meta">row_id <b>33</b> · consumer <b>1</b><br>
+      <span class="tagchip att">attack6</span><br>
+      gen_method <b>label_blind</b><br>
+      gen_params cut-off <b>27.7541</b></div>
+    <div class="rat"><span class="lbl">rationale</span>“…normal off-peak consumption values (ranging from 21.3 to 27.7 Wh) are fully preserved. However, during typical peak periods… the profile is completely flattened. The maximum recorded value across the entire day is strictly capped at 27.8 Wh…”</div>
+  </div>
+
+  <div class="rowcard">
+    <div class="spark"><svg id="ex3" viewBox="0 0 220 52"></svg></div>
+    <div class="meta">row_id <b>158</b> · consumer <b>6</b><br>
+      <span class="tagchip att">attack1</span><br>
+      gen_method <b>label_blind</b><br>
+      gen_params factor <b>0.5245</b></div>
+    <div class="rat"><span class="lbl">rationale</span>“The query day exhibits a consumption profile that fully preserves the typical daily trend… but with uniformly reduced magnitude across all 96 intervals. The peak consumption is 3.3 Wh compared to normal peaks of 6.2–9.6 Wh…”</div>
+  </div>
+
+  <p class="cap">Profiles are drawn schematically from each rationale's quoted values (teal: the consumer's normal shape; orange: the row's day). The rationale column is what the teacher wrote from the readings alone; on the ~11% of days where the teacher's own diagnosis was wrong, the label was revealed and the rationale regenerated (<span class="mono">gen_method = rationalization</span>).</p>
 </section>
 
 <!-- 6 ▸ INPUT / PROMPT -->
@@ -406,6 +455,17 @@ for(const[name,fam,mech,vals]of ATTACKS){
    <text x="18" y="236" font-size="12" fill="var(--benign)" font-family="var(--sans)"><tspan font-size="20" font-family="var(--serif)">259 consumers</tspan>  →  6,589 training days</text>
    <text x="18" y="266" font-size="12" fill="var(--theft)" font-family="var(--sans)"><tspan font-size="20" font-family="var(--serif)">65 consumers</tspan>  →  1,650 evaluation days</text>
    <text x="18" y="288" font-size="10.5" fill="var(--muted)" font-family="var(--sans)">no consumer appears on both sides: the eval consumers are entirely unseen</text>`;
+})();
+/* ---------- slide 5b: example-row sparklines ---------- */
+(function(){
+  const draw=(id,vals,withBase)=>{
+    const el=document.getElementById(id);
+    el.innerHTML=(withBase?`<polyline points="${poly(BASE,220,46,42,0,3)}" fill="none" stroke="var(--benign)" stroke-width="1.3" opacity=".45"/>`:"")+
+      `<polyline points="${poly(vals,220,46,42,0,3)}" fill="none" stroke="${withBase?"var(--theft)":"var(--benign)"}" stroke-width="1.7"/>`;
+  };
+  draw("ex1",BASE,false);
+  draw("ex2",BASE.map(v=>Math.min(v,17)),true);
+  draw("ex3",BASE.map(v=>v*0.52),true);
 })();
 /* ---------- slide 8: attack6 example ---------- */
 (function(){
