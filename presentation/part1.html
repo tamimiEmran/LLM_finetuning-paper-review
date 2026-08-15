@@ -238,25 +238,27 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
   <div class="eyebrow">Output · what the model must produce</div>
   <h1>One structured answer: verdict, mechanism, explanation</h1>
   <div class="cols">
-    <div class="col" style="flex:1.3">
-<div class="code">{
-  <span class="k">"classification"</span>: <span class="v">"original" | "manipulated"</span>,
+    <div class="col" style="flex:1.42;min-width:0">
+      <h2>The fine-tuned workhorse's complete, unedited output for one manipulated evaluation day</h2>
+<div class="code" style="font-size:.63rem;line-height:1.48">{
+  <span class="k">"classification"</span>: <span class="v">"manipulated"</span>,
   <span class="k">"identified_attack"</span>: {
-    <span class="k">"most_likely"</span>: <span class="v">"attack0" … "attack13"</span> <span class="c">· null if original</span>,
-    <span class="k">"confidence"</span>: <span class="v">"High" | "Medium" | "Low"</span>,
-    <span class="k">"reasoning"</span>: <span class="v">why this attack, why the alternatives were ruled out</span>
+    <span class="k">"most_likely"</span>: <span class="v">"attack6"</span>,
+    <span class="k">"confidence"</span>: <span class="v">"High"</span>,
+    <span class="k">"reasoning"</span>: "The query day's consumption profile closely follows the normal reference week's shape for most of the day, but exhibits an unnatural flattening during typical peak periods. Specifically, multiple intervals throughout the day are capped at exactly <span class="v">27.8 Wh</span>, while values below this threshold remain at their normal, variable levels (e.g., 27.7 Wh, 27.0 Wh). This behavior perfectly matches Attack 6, where all readings above a specific cut-off threshold are clipped to that threshold, flattening the peaks and reducing total consumption. This manipulation is typically caused by false data injection. The cut-off threshold parameter is clearly identifiable as <span class="v">27.8</span>."
   },
   <span class="k">"attack_behavior_explanation"</span>: {
-    <span class="k">"manipulation_relative_to_normal"</span>: <span class="v">…</span>,
-    <span class="k">"impact_on_magnitude_and_trend"</span>: <span class="v">…</span>,
-    <span class="k">"possible_technical_causes"</span>: <span class="v">…</span>
+    <span class="k">"manipulation_relative_to_normal"</span>: "A cutoff is chosen and every value above it is replaced by that cutoff, flattening the peaks.",
+    <span class="k">"impact_on_magnitude_and_trend"</span>: "Changes both trend and amplitude, mostly around the original peaks.",
+    <span class="k">"possible_technical_causes"</span>: "False data injection."
   }
 }</div>
-      <p class="cap">A later variant appends a magnitude block: the estimated fraction of energy removed and the manipulated time window.</p>
+      <p class="cap">On a benign day the model outputs <span class="mono">"classification": "original"</span> and every other field null. A later variant appends a magnitude block: the estimated fraction of energy removed and the manipulated window. The next slide dissects this same day against its injected ground truth.</p>
     </div>
     <div class="col" style="flex:1">
       <ul class="clean">
-        <li><strong>From text to metrics.</strong> The model outputs text; that text is read back into the fields on the left, and every metric compares those fields to the ground-truth label. This read-back succeeded on <strong>100%</strong> of predictions, at every run and training size in the paper.</li>
+        <li><strong>Verdict, mechanism, evidence, mechanism knowledge.</strong> One answer carries the binary decision, the attack identification with stated confidence, the evidence read from the readings, and how that attack behaves in general.</li>
+        <li><strong>From text to metrics.</strong> The model outputs text; that text is read back into these fields, and every metric compares the fields to the ground-truth label. The read-back succeeded on <strong>100%</strong> of predictions, at every run and training size in the paper.</li>
         <li><strong>A label alone breaks AUC.</strong> Threshold metrics need a probability. With the output held fixed up to the classification field, the model's own probabilities for the two class words are renormalized into p(manipulated), restoring AUC without changing any prediction.</li>
         <li><strong>Explanations are graded.</strong> ROUGE-L against the teacher rationale, and (stricter) whether the stated attack parameter is numerically correct: five attacks have a single recorded value, n = 610 evaluation days.</li>
       </ul>
