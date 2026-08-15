@@ -49,10 +49,14 @@
   .footnote{position:fixed;left:5vw;bottom:5.6vh;font-family:var(--mono);font-size:.72rem;color:var(--muted)}
   /* taxonomy grid */
   .tax{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1vh 1vw;flex:1;min-height:0;margin-top:1.6vh}
-  .tax .cell{background:#fff;border:1px solid var(--grid);border-radius:8px;padding:.7vh .6vw .5vh;display:flex;flex-direction:column}
+  .tax .cell{background:#fff;border:1.5px solid var(--grid);border-radius:8px;padding:.7vh .6vw .5vh;display:flex;flex-direction:column}
   .tax .hd{display:flex;justify-content:space-between;align-items:baseline}
   .tax .nm{font-family:var(--mono);font-size:.78rem;font-weight:600}
-  .tax .fam{font-family:var(--mono);font-size:.62rem;padding:.05rem .35rem;border-radius:3px;background:var(--benign-soft);color:var(--benign)}
+  .tax .fam{font-family:var(--mono);font-size:.62rem;padding:.05rem .35rem;border-radius:3px}
+  .tax .cell.fZ{border-color:#BFD0DE}.tax .cell.fZ .fam{background:#E3ECF3;color:#3B617E}
+  .tax .cell.fM{border-color:#D3C6E2}.tax .cell.fM .fam{background:#EDE7F4;color:#6B5691}
+  .tax .cell.fT{border-color:#E2D2A8}.tax .cell.fT .fam{background:#F4ECD8;color:#8A6A1F}
+  .tax .cell.fS{border-color:#C2DBBE}.tax .cell.fS .fam{background:#E6F1E4;color:#47703F}
   .tax .mech{font-size:.68rem;color:var(--muted);line-height:1.25;margin-top:.3vh}
   /* prompt anatomy */
   .prompt{font-family:var(--mono);font-size:.68rem;line-height:1.5;background:#fff;border:1px solid var(--grid);border-radius:8px;overflow:hidden}
@@ -187,6 +191,7 @@
       <div class="panel" style="margin-top:2.2vh">
         <h2>Each row carries</h2>
         <p style="font-size:.85rem;line-height:1.5">96 readings · ground-truth label · the attack's recorded generation parameters · a <strong>teacher rationale</strong>, written from the readings alone (the label is revealed to the teacher only where its own diagnosis was wrong, ~11% of days).</p>
+        <p style="font-size:.78rem;line-height:1.45;color:var(--muted);margin-top:.8vh">Provenance: real consumption records; attacks injected synthetically upstream, which is why each manipulated day's true parameters are on record.</p>
       </div>
     </div>
   </div>
@@ -251,7 +256,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
     </div>
     <div class="col" style="flex:1">
       <ul class="clean">
-        <li><strong>Deterministic decoding.</strong> The model generates greedily; the answer is parsed for scoring. Across every run and training size in the paper, the format parse rate is <strong>100%</strong> — zero violations.</li>
+        <li><strong>From text to metrics.</strong> The model outputs text; that text is read back into the fields on the left, and every metric compares those fields to the ground-truth label. This read-back succeeded on <strong>100%</strong> of predictions, at every run and training size in the paper.</li>
         <li><strong>A label alone breaks AUC.</strong> Threshold metrics need a probability. With the output held fixed up to the classification field, the model's own probabilities for the two class words are renormalized into p(manipulated), restoring AUC without changing any prediction.</li>
         <li><strong>Explanations are graded.</strong> ROUGE-L against the teacher rationale, and (stricter) whether the stated attack parameter is numerically correct: five attacks have a single recorded value, n = 610 evaluation days.</li>
       </ul>
@@ -349,7 +354,7 @@ const ATTACKS=[
 /* ---------- taxonomy grid ---------- */
 const grid=document.getElementById("taxGrid");
 for(const[name,fam,mech,vals]of ATTACKS){
-  const c=document.createElement("div");c.className="cell";
+  const c=document.createElement("div");c.className="cell f"+fam;
   c.innerHTML=`<div class="hd"><span class="nm">${name}</span><span class="fam">${fam}</span></div>
   <svg viewBox="0 0 200 52" style="flex:1;min-height:0">
     <polyline points="${poly(BASE,200,48,42,0,2)}" fill="none" stroke="var(--benign)" stroke-width="1.4" opacity=".45"/>
