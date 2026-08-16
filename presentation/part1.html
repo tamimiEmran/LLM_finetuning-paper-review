@@ -491,20 +491,19 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
   <p class="lede">Recovery billing needs the size of the theft, not only its name. The magnitude block extends the same structured output: estimated fraction of energy removed, plus the manipulated window.</p>
   <div class="exprow">
     <div class="diag" style="flex:1.35"><svg id="e6flow" viewBox="0 0 520 178"></svg>
-      <svg id="e6chart" viewBox="0 0 520 200" style="margin-top:.8vh"></svg>
-      <div class="dcap">The controls answer the same question through cheaper routes: a lookup of each attack class's average fraction (using the predicted or the true class), and two regressors fit on the same readings. The gradient-boosted one can nearly recompute the fraction's arithmetic, so its 0.0012 marks the best any method can do.</div></div>
+      <div class="dcap">The pre-attack day exists for every manipulated row because the attacks are synthetic: the injector transformed a recorded real day, so the energy it removed is exact, on record, and independent of any estimate. The committed fraction scores were computed against a reference-week estimate of that quantity; re-scoring against the pre-attack day itself is queued (the two can differ by up to the consumer's ordinary week-to-week variation).</div></div>
     <div style="flex:.85"><dl class="setupcard">
-      <dt>why the reference week, never the pre-attack day</dt><dd>the pre-attack profile is unobservable in deployment; the reference week is exactly what the detector receives, so the same truth is computable in evaluation and in production, and it is defined for benign days too, which is what calibrated the natural-variation band</dd>
-      <dt>scoring rule</dt><dd>a claimed manipulation with no stated magnitude counts as claiming 0.00; energy-neutral attacks excluded (their removed energy is zero by construction)</dd>
+      <dt>target</dt><dd>the model states the fraction of energy removed (0–1) plus the manipulated window; a claimed manipulation with no stated magnitude counts as claiming 0.00</dd>
+      <dt>truth</dt><dd>the pre-attack day recorded at injection: energy removed = 1 − E_attacked / E_pre-attack; the injected window boundaries for window-shaped attacks</dd>
       <dt>interference check</dt><dd>classification vs the plain workhorse, specified before the run</dd>
     </dl></div>
     <div style="flex:1">
       <div class="resnums">
-        <div><div class="n">0.032</div><div class="l">MAE; Spearman 0.976; window IoU 0.874</div></div>
-        <div><div class="n">2.8×</div><div class="l">better than the class-prior lookup (CI excludes 0)</div></div>
-        <div><div class="n">27×</div><div class="l">worse than a GBM reading the same values: the honest ceiling</div></div>
+        <div><div class="n">0.874</div><div class="l">window IoU vs the injected boundaries; error under one 15-minute interval</div></div>
+        <div><div class="n">+0.006</div><div class="l">classification change from carrying the magnitude target; CI spans 0</div></div>
+        <div><div class="n">0.032</div><div class="l">fraction MAE vs the reference-week estimate; pre-attack re-score queued</div></div>
       </div>
-      <p class="finding">The estimates are genuine per-day measurements, and carrying the extra target costs classification nothing (Δ +0.006, CI spans 0). For magnitude in isolation a dedicated regressor wins; the value is one answer that detects, names, sizes, and locates at once.</p>
+      <p class="finding">The window the model names overlaps the injected one almost exactly, and carrying the extra target costs classification nothing. The stated fractions track the reference-week estimate at 0.032 MAE with rank correlation 0.976; the definitive number against the pre-attack day arrives with the queued re-score.</p>
     </div>
   </div>
 </section>
@@ -782,32 +781,19 @@ for(const[name,fam,mech,vals]of ATTACKS){
     `<text x="185" y="126" font-size="9" fill="${B}" font-family="var(--mono)">yes</text>
      <text x="382" y="126" font-size="9" fill="${T}" font-family="var(--mono)">no</text>`;
 
-  /* E6: how MAE is produced (flow) */
+  /* E6: how the magnitude is scored (flow, pre-attack-day truth) */
   document.getElementById("e6flow").innerHTML=DEFS+
     box(10,14,142,48,"one manipulated day:\nquery readings +\nreference week")+
     box(206,14,120,48,"fine-tuned\nmodel")+
     box(378,10,132,56,"states\nfraction removed: 0.42\nwindow: 27–38","var(--theft-soft)",T)+
-    box(206,116,158,52,"arithmetic on the readings\n1 − E_query / Ē_ref-week","#fff")+
-    box(378,120,132,44,"truth\nfraction: 0.45","#EAF2EE",B)+
+    box(10,116,142,52,"pre-attack day\n(recorded when the\nattack was injected)","#fff")+
+    box(206,116,158,52,"1 − E_attacked / E_pre-attack\n+ the injected window","#fff")+
+    box(378,120,132,44,"truth\nfraction · window","#EAF2EE",B)+
     arrow(152,38,202,38)+arrow(326,38,374,38)+
-    arrow(80,62,80,142)+arrow(80,142,202,142)+
-    arrow(364,142,374,142)+
+    arrow(152,142,202,142)+arrow(364,142,374,142)+
     `<line x1="444" y1="70" x2="444" y2="116" stroke="#555" stroke-width="1.3" marker-end="url(#ah)" marker-start="url(#ah)"/>
      <text x="436" y="88" text-anchor="end" font-size="9.5" fill="var(--ink)" font-family="var(--mono)">|stated − truth|</text>
-     <text x="436" y="102" text-anchor="end" font-size="9.5" fill="${MU}" font-family="var(--mono)">mean of 1,260 days = MAE</text>`;
-
-  /* E6: magnitude MAE bars */
-  (function(){
-    const rows=[["GBM on readings (ceiling)",.0012,"#444"],["workhorse (LLM)",.0321,T],
-                ["class-prior, predicted",.0897,MU],["class-prior, gold",.0903,MU],["ridge on readings",.1313,MU]];
-    const x=v=>190+v/0.14*300, y=i=>30+i*34;
-    let s="";
-    rows.forEach((r,i)=>{s+=`<text x="182" y="${y(i)+5}" text-anchor="end" font-size="9.5" fill="var(--ink)" font-family="var(--sans)">${r[0]}</text>
-      <rect x="190" y="${y(i)-8}" width="${Math.max(2,x(r[1])-190)}" height="16" rx="3" fill="${r[2]}" opacity="${r[2]===T?1:.55}"/>
-      <text x="${x(r[1])+6}" y="${y(i)+4}" font-size="9.5" fill="var(--ink)" font-family="var(--mono)">${r[1].toFixed(4)}</text>`});
-    s+=`<text x="190" y="12" font-size="9" fill="${MU}" font-family="var(--mono)">MAE on the energy-reduction fraction (lower is better)</text>`;
-    document.getElementById("e6chart").innerHTML=s;
-  })();
+     <text x="436" y="102" text-anchor="end" font-size="9.5" fill="${MU}" font-family="var(--mono)">mean over 1,260 days = MAE</text>`;
 
   /* E7: cost-accuracy frontier */
   (function(){
