@@ -491,10 +491,10 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
   <p class="lede">Recovery billing needs the size of the theft, not only its name. The magnitude block extends the same structured output: estimated fraction of energy removed, plus the manipulated window.</p>
   <div class="exprow">
     <div class="diag" style="flex:1.25"><svg id="e6chart" viewBox="0 0 520 240"></svg>
-      <div class="dcap">Mean absolute error on the energy-reduction fraction, against per-day controls and the reading-level ceiling.</div></div>
+      <div class="dcap">MAE = mean |stated − true fraction| over 1,260 days. The gradient-boosted regressor can nearly recompute the fraction's arithmetic from the readings, so its 0.0012 marks the reachable floor; on this inverted axis, the ceiling.</div></div>
     <div style="flex:.85"><dl class="setupcard">
-      <dt>model</dt><dd>workhorse retrained with the magnitude block appended to the output</dd>
-      <dt>controls</dt><dd>class-prior lookup (predicted and gold class) · ridge on readings · GBM on readings</dd>
+      <dt>target and truth</dt><dd>the model states the fraction of expected energy removed (0–1) plus the manipulated window; truth is the realized fraction recomputed from the readings; a claimed manipulation with no stated magnitude scores as 0.00</dd>
+      <dt>controls</dt><dd>class-prior lookup: the training-set mean fraction of the predicted (or gold) class · ridge and gradient-boosted (GBM) regressors fit on the same readings</dd>
       <dt>interference check</dt><dd>classification vs the plain workhorse, specified before the run</dd>
     </dl></div>
     <div style="flex:1">
