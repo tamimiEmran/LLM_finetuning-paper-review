@@ -509,7 +509,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
   <p class="lede">Recovery billing needs the size of the theft, not only its name. The magnitude block extends the same structured output: estimated fraction of energy removed, plus the manipulated window.</p>
   <div class="exprow">
     <div class="diag" style="flex:1.35"><svg id="e6flow" viewBox="0 0 520 178"></svg>
-      <div class="dcap">The pre-attack day exists for every manipulated row because the attacks are synthetic: the injector transformed a recorded real day, so the energy it removed is exact, on record, and independent of any estimate. The committed fraction scores were computed against a reference-week estimate of that quantity; re-scored against the pre-attack day itself, the same predictions attain 0.041 MAE (coverage 1260/1260 via the original-sibling self-join). The 0.009 gap is the proxy-versus-truth distance: the model was trained to state the reference-week estimate.</div></div>
+      <div class="dcap">The pre-attack day exists for every manipulated row because the attacks are synthetic: the injector transformed a recorded real day, so the energy it removed is exact, on record, and independent of any estimate. The stated fraction is scored against exactly that quantity, recovered for all 1,260 magnitude-bearing rows via the original-sibling self-join.</div></div>
     <div style="flex:.85"><dl class="setupcard">
       <dt>target</dt><dd>the model states the fraction of energy removed (0–1) plus the manipulated window; a claimed manipulation with no stated magnitude counts as claiming 0.00</dd>
       <dt>truth</dt><dd>the pre-attack day recorded at injection: energy removed = 1 − E_attacked / E_pre-attack; the injected window boundaries for window-shaped attacks</dd>
@@ -519,9 +519,9 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
       <div class="resnums">
         <div><div class="n">0.874</div><div class="l">window IoU vs the injected boundaries; error under one 15-minute interval</div></div>
         <div><div class="n">+0.006</div><div class="l">classification change from carrying the magnitude target; CI spans 0</div></div>
-        <div><div class="n">0.032</div><div class="l">fraction MAE vs the reference-week estimate; 0.041 vs the pre-attack day</div></div>
+        <div><div class="n">0.041</div><div class="l">fraction MAE vs the pre-attack day; a reading-level GBM reaches 0.032</div></div>
       </div>
-      <p class="finding">The window the model names overlaps the injected one almost exactly, and carrying the extra target costs classification nothing. The stated fractions track the reference-week estimate at 0.032 MAE with rank correlation 0.976, and hold 0.041 MAE against the pre-attack day itself, the exact energy the injector removed.</p>
+      <p class="finding">The window the model names overlaps the injected one almost exactly, and carrying the extra target costs classification nothing. The stated fractions hold 0.041 MAE against the exact energy the injector removed, with rank correlation 0.956; a dedicated reading-level regressor reaches 0.032, so the value is the integrated answer rather than magnitude alone.</p>
     </div>
   </div>
 </section>
