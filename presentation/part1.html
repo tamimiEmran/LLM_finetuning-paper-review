@@ -300,7 +300,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
   <h1>One structured answer: verdict, mechanism, explanation</h1>
   <div class="cols">
     <div class="col" style="flex:1.42;min-width:0">
-      <h2>The fine-tuned workhorse's complete, unedited output for one manipulated evaluation day</h2>
+      <h2>The fine-tuned deployment candidate's complete, unedited output for one manipulated evaluation day</h2>
 <div class="code" style="font-size:.63rem;line-height:1.48">{
   <span class="k">"classification"</span>: <span class="v">"manipulated"</span>,
   <span class="k">"identified_attack"</span>: {
@@ -360,7 +360,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
 <section class="slide" id="s10">
   <div class="eyebrow">The experiments</div>
   <h1>One screening pass selects the model; every later experiment stresses it</h1>
-  <p class="lede">Seven candidates are trained once under a frozen recipe. A rule fixed beforehand picks the flagship (best) and the workhorse (smallest statistically tied). All further training runs on the workhorse; two analyses re-use its predictions; the frontier prices everything.</p>
+  <p class="lede">Seven candidates are trained once under a frozen recipe. A rule fixed beforehand picks the flagship (best) and the deployment candidate (smallest statistically tied). All further training runs on the deployment candidate; two analyses re-use its predictions; the frontier prices everything.</p>
   <div class="diag" style="flex:1;margin-top:1.6vh"><svg id="chainFig" viewBox="0 0 960 300"></svg></div>
 </section>
 
@@ -376,15 +376,15 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
       <dt>models</dt><dd>Qwen3-8B/14B · Phi-4-reasoning · Ministral-3-14B · Llama-3.1-8B · Gemma-4-E4B/31B</dd>
       <dt>recipe, frozen for all</dt><dd>LoRA (DoRA) r=16 α=32, all-linear, 1 epoch, lr 2e-4; 31B in 4-bit</dd>
       <dt>conditions</dt><dd>zero-shot and fine-tuned, catalog prompt, same 1,650-day slice</dd>
-      <dt>selection rule, fixed beforehand</dt><dd>best macro-F1 = flagship; smallest model with CI on the gap containing zero = workhorse</dd>
+      <dt>selection rule, fixed beforehand</dt><dd>best macro-F1 = flagship; smallest model with CI on the gap containing zero = deployment candidate</dd>
     </dl></div>
     <div style="flex:1">
       <div class="resnums">
         <div><div class="n">0.9331</div><div class="l">flagship Phi-4-reasoning, above Gemini's 0.929</div></div>
-        <div><div class="n">0.9229</div><div class="l">workhorse Qwen3-8B, tied: CI [−.023, +.002]</div></div>
+        <div><div class="n">0.9229</div><div class="l">deployment candidate Qwen3-8B, tied: CI [−.023, +.002]</div></div>
         <div><div class="n">0.9122</div><div class="l">random forest, same split, ~$0 inference</div></div>
       </div>
-      <p class="finding">Zero-shot, the open bases collapse (best 0.5927; most near 0), so fine-tuning does the work. The forest ties the workhorse on identification (p = 0.204); the workhorse's surviving edge is specificity, 0.892 vs 0.715 (p &lt; 1e-5), which halves false alarms. Accuracy alone justifies the LLM only weakly; the rest of the experiments answer what else it provides.</p>
+      <p class="finding">Zero-shot, the open bases collapse (best 0.5927; most near 0), so fine-tuning does the work. The forest ties the deployment candidate on identification (p = 0.204); the deployment candidate's surviving edge is specificity, 0.892 vs 0.715 (p &lt; 1e-5), which halves false alarms. Accuracy alone justifies the LLM only weakly; the rest of the experiments answer what else it provides.</p>
     </div>
   </div>
 </section>
@@ -398,7 +398,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
     <div class="diag" style="flex:1.25"><svg id="e2chart" viewBox="0 0 520 240"></svg>
       <div class="dcap">Macro-F1 vs training days (log-x). The forest and CatBoost train on the identical class-stratified subsets.</div></div>
     <div style="flex:.85"><dl class="setupcard">
-      <dt>model</dt><dd>workhorse only, same recipe, retrained from the base at each size</dd>
+      <dt>model</dt><dd>deployment candidate only, same recipe, retrained from the base at each size</dd>
       <dt>grid</dt><dd>65 / 260 / 1,040 days (3 data seeds at the two smallest) and the full 6,589</dd>
       <dt>baselines</dt><dd>random forest, CatBoost, XGBoost on the identical subsets</dd>
       <dt>cost basis</dt><dd>H100 at $2.50/h; the trees train in CPU-minutes</dd>
@@ -407,9 +407,9 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
       <div class="resnums">
         <div><div class="n">81%</div><div class="l">of full performance at 80 labels/class ($2.07)</div></div>
         <div><div class="n">$13.08</div><div class="l">the full 6,589-day fine-tune, 5.23 GPU-h</div></div>
-        <div><div class="n">0.745</div><div class="l">forest macro-F1 at 65 days vs workhorse 0.259</div></div>
+        <div><div class="n">0.745</div><div class="l">forest macro-F1 at 65 days vs deployment candidate 0.259</div></div>
       </div>
-      <p class="finding">Every classical variant dominates until labels are plentiful; the low-label regime belongs to them outright. Inside the workhorse, AUC reaches 0.887 at 65 days while specificity sits at 0.008: labeled data buys the output format first, the taxonomy second, and the decision threshold last.</p>
+      <p class="finding">Every classical variant dominates until labels are plentiful; the low-label regime belongs to them outright. Inside the deployment candidate, AUC reaches 0.887 at 65 days while specificity sits at 0.008: labeled data buys the output format first, the taxonomy second, and the decision threshold last.</p>
     </div>
   </div>
 </section>
@@ -424,7 +424,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
       <div class="dcap">Four retrainings; shaded attacks are removed from training and form the evaluation set (plus all 130 benign days). Their catalog descriptions remain in the prompt.</div></div>
     <div style="flex:.85"><dl class="setupcard">
       <dt>rotations</dt><dd>R-Z (0, 2, 13) · R-M (1, 3, 4, 5) · R-T (6, 7) · R-S (9, 10, 12)</dd>
-      <dt>model</dt><dd>workhorse, same recipe, retrained per rotation</dd>
+      <dt>model</dt><dd>deployment candidate, same recipe, retrained per rotation</dd>
       <dt>classical control</dt><dd>random forest retrained on the identical reduced sets, same eval days</dd>
     </dl></div>
     <div style="flex:1">
@@ -432,7 +432,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
         <div><div class="n">10 / 12</div><div class="l">never-seen attacks detected at recall ≥ 0.85 (five at 1.000)</div></div>
         <div><div class="n">0.000</div><div class="l">identification accuracy on held-out attacks (attack2 alone partially recovers from its description)</div></div>
       </div>
-      <p class="finding">Specificity is preserved in every rotation (0.869–0.938), so the transfer is not bought with false alarms. The two failures, attack4 (0.437) and attack10 (0.269), both barely move the day's energy. The forest fails elsewhere: it catches the time reversal at 0.862 where the workhorse reads 0.269, and misses the clipping at 0.754 where the workhorse holds 0.992. The two detector families cover each other's blind spots.</p>
+      <p class="finding">Specificity is preserved in every rotation (0.869–0.938), so the transfer is not bought with false alarms. The two failures, attack4 (0.437) and attack10 (0.269), both barely move the day's energy. The forest fails elsewhere: it catches the time reversal at 0.862 where the deployment candidate reads 0.269, and misses the clipping at 0.754 where the deployment candidate holds 0.992. The two detector families cover each other's blind spots.</p>
     </div>
   </div>
 </section>
@@ -513,7 +513,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
     <div style="flex:.85"><dl class="setupcard">
       <dt>target</dt><dd>the model states the fraction of energy removed (0–1) plus the manipulated window; a claimed manipulation with no stated magnitude counts as claiming 0.00</dd>
       <dt>truth</dt><dd>the pre-attack day recorded at injection: energy removed = 1 − E_attacked / E_pre-attack; the injected window boundaries for window-shaped attacks</dd>
-      <dt>interference check</dt><dd>classification vs the plain workhorse, specified before the run; same catalog prompt and recipe, so the added target is the only difference</dd>
+      <dt>interference check</dt><dd>classification vs the plain deployment candidate, specified before the run; same catalog prompt and recipe, so the added target is the only difference</dd>
     </dl></div>
     <div style="flex:1">
       <div class="resnums">
@@ -529,7 +529,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
 <!-- 17 ▸ E7 FRONTIER -->
 <section class="slide" id="s17">
   <div class="eyebrow">Experiment 7 · deployment recommendation · RQ6</div>
-  <h1>Recommendation: screen with the forest, adjudicate with the workhorse</h1>
+  <h1>Recommendation: screen with the forest, adjudicate with the deployment candidate</h1>
   <p class="lede">Accuracy, cost, and per-flag content priced together, at assumed rates: local H100 amortized at $2.50/h, API at $5 per million tokens. The frontier decides the workflow.</p>
   <div class="exprow">
     <div class="diag" style="flex:1.25"><svg id="e7chart" viewBox="0 0 520 240"></svg>
@@ -537,16 +537,16 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
     <div style="flex:.85"><dl class="setupcard">
       <dt>operating points</dt><dd>forest on CPU · fine-tuned models local · Gemini 3.1 Pro via API</dd>
       <dt>1 · screen</dt><dd>forest scores every meter-day on CPU at ~$0; strongest when labels are scarce (Exp. 2), transfers to unseen families (Exp. 3)</dd>
-      <dt>2 · adjudicate</dt><dd>workhorse re-decides flagged days at 0.892 specificity vs 0.715, and attaches name, mechanism, magnitude, window</dd>
+      <dt>2 · adjudicate</dt><dd>deployment candidate re-decides flagged days at 0.892 specificity vs 0.715, and attaches name, mechanism, magnitude, window</dd>
       <dt>3 · inspect</dt><dd>humans receive only explained, quantified findings; capacity scales with the flag rate, never the fleet</dd>
     </dl></div>
     <div style="flex:1">
       <div class="resnums">
-        <div><div class="n">$7.48</div><div class="l">workhorse per 1,000 query-days; API 4.3× the price for 0.006 more macro-F1</div></div>
+        <div><div class="n">$7.48</div><div class="l">deployment candidate per 1,000 query-days; API 4.3× the price for 0.006 more macro-F1</div></div>
         <div><div class="n">523</div><div class="l">query-days to repay the $13.08 fine-tune vs the API</div></div>
         <div><div class="n">$6.92</div><div class="l">cascade per 1,000 days at 0.9114 macro-F1</div></div>
       </div>
-      <p class="finding">The front runs forest → workhorse → flagship; the API and the 31B model sit strictly inside it. The cascade is the recommended default: each detector covers the other's blind spots, catalog updates retrain the adjudicator without re-budgeting inspections, and the blended cost sits below running the workhorse alone. The 0.925 flag rate of this theft-heavy slice makes that cost an upper bound.</p>
+      <p class="finding">The front runs forest → deployment candidate → flagship; the API and the 31B model sit strictly inside it. The cascade is the recommended default: each detector covers the other's blind spots, catalog updates retrain the adjudicator without re-budgeting inspections, and the blended cost sits below running the deployment candidate alone. The 0.925 flag rate of this theft-heavy slice makes that cost an upper bound.</p>
     </div>
   </div>
 </section>
@@ -562,7 +562,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
         <li>Below full data, classical models dominate; the low-label regime belongs to them.</li>
         <li>Detection survives unseen attack families wherever meaningful energy moves; failures are governed by severity, and the two detector families miss different attacks.</li>
         <li>Explanations cost 1.6 macro-F1 points and no detection; stated attack parameters check out against injected ground truth on 79.8% of parameterized days.</li>
-        <li>The deployable answer is a cascade: the free classical screen in front, the workhorse converting each flag into an explained, quantified finding.</li>
+        <li>The deployable answer is a cascade: the free classical screen in front, the deployment candidate converting each flag into an explained, quantified finding.</li>
       </ul>
     </div>
     <div class="col" style="flex:.8;display:flex;align-items:center">
@@ -703,7 +703,7 @@ for(const[name,fam,mech,vals]of ATTACKS){
   /* chain (divider) */
   document.getElementById("chainFig").innerHTML=DEFS+
     box(20,110,190,66,"screening\n7 models · one recipe\nzero-shot + fine-tuned")+
-    box(268,110,175,66,"selection rule\nflagship: best macro-F1\nworkhorse: smallest tied")+
+    box(268,110,175,66,"selection rule\nflagship: best macro-F1\ndeployment candidate: smallest tied")+
     box(510,20,180,52,"data curve (RQ2)\n65 → 6,589 days")+
     box(510,90,180,52,"rotations (RQ3)\nfamilies held out")+
     box(510,160,180,52,"rationales (RQ5)\nR0 vs R1, catalog-free")+
@@ -714,7 +714,7 @@ for(const[name,fam,mech,vals]of ATTACKS){
     arrow(443,127,506,46)+arrow(443,137,506,116)+arrow(443,148,506,186)+arrow(443,158,506,256)+
     arrow(690,60,756,78)+arrow(690,120,756,95)+
     arrow(690,190,756,196)+arrow(690,250,756,215)+
-    `<text x="475" y="292" text-anchor="middle" font-size="10" fill="${MU}" font-family="var(--mono)">workhorse retrained per experiment</text>`;
+    `<text x="475" y="292" text-anchor="middle" font-size="10" fill="${MU}" font-family="var(--mono)">deployment candidate retrained per experiment</text>`;
 
   /* E1: zero-shot -> fine-tuned dumbbells, rows ordered by parameter count */
   (function(){
@@ -742,7 +742,7 @@ for(const[name,fam,mech,vals]of ATTACKS){
     let s=line(CB,"#8c8c8c","2 3",1.4)+line(RF,"#444",null,1.8)+line(W,T,null,2.2);
     N.forEach(n=>{s+=`<text x="${x(n)}" y="228" text-anchor="middle" font-size="9" fill="${MU}" font-family="var(--mono)">${n.toLocaleString()}</text>`});
     s+=`<text x="60" y="14" font-size="9" fill="${MU}" font-family="var(--mono)">macro-F1</text>
-        <text x="${x(6589)-10}" y="${y(.9229)-10}" text-anchor="end" font-size="9.5" fill="${T}" font-family="var(--mono)">workhorse</text>
+        <text x="${x(6589)-10}" y="${y(.9229)-10}" text-anchor="end" font-size="9.5" fill="${T}" font-family="var(--mono)">deployment candidate</text>
         <text x="${x(65)+10}" y="${y(.7451)-10}" font-size="9.5" fill="#444" font-family="var(--mono)">random forest</text>
         <text x="${x(260)}" y="${y(.8624)-10}" font-size="9.5" fill="#8c8c8c" font-family="var(--mono)">CatBoost</text>`;
     document.getElementById("e2chart").innerHTML=s;
@@ -808,8 +808,8 @@ for(const[name,fam,mech,vals]of ATTACKS){
   /* E4: severity curves */
   (function(){
     const labs=["<10%","10–30%","30–60%",">60%","energy-neutral"];
-    const S={ "flagship":[.971,1,.998,1,.977], "workhorse":[.957,.990,.998,1,.969], "Gemma-4-31B":[.768,.964,.996,1,.954] };
-    const cols={flagship:B, workhorse:T, "Gemma-4-31B":"#8c8c8c"};
+    const S={ "flagship":[.971,1,.998,1,.977], "deployment candidate":[.957,.990,.998,1,.969], "Gemma-4-31B":[.768,.964,.996,1,.954] };
+    const cols={flagship:B, deployment candidate:T, "Gemma-4-31B":"#8c8c8c"};
     const x=i=>70+i*95+(i===4?40:0), y=v=>200-(v-.74)*560;
     let s="";
     labs.forEach((l,i)=>{s+=`<text x="${x(i)}" y="224" text-anchor="middle" font-size="9" fill="${MU}" font-family="var(--mono)">${l}</text>`});
@@ -858,7 +858,7 @@ for(const[name,fam,mech,vals]of ATTACKS){
   /* E7: cost-accuracy frontier */
   (function(){
     const pts=[["random forest",.01,.9122,T,true,false,12,4,"start"],["cascade",6.92,.9114,T,false,true,0,20,"middle"],
-               ["workhorse",7.48,.9229,T,true,false,-10,4,"end"],["Ministral-3-14B",9.07,.9298,MU,false,false,10,10,"start"],
+               ["deployment candidate",7.48,.9229,T,true,false,-10,4,"end"],["Ministral-3-14B",9.07,.9298,MU,false,false,10,10,"start"],
                ["flagship",9.07,.9331,T,true,false,-10,-4,"end"],["Gemini (API)",32.5,.929,B,false,false,-2,-10,"end"],
                ["Gemma-4-31B",33.89,.8517,MU,false,false,-2,-10,"end"]];
     const x=c=>70+(Math.log10(c)-Math.log10(.01))/(Math.log10(40)-Math.log10(.01))*420, y=v=>205-(v-.84)*1650;
