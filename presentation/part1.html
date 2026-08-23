@@ -360,7 +360,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
 <section class="slide" id="s10">
   <div class="eyebrow">The experiments</div>
   <h1>One screening pass selects the model; every later experiment stresses it</h1>
-  <p class="lede">Seven candidates are trained once under a frozen recipe. A rule fixed beforehand picks the flagship (best) and the deployment candidate (smallest statistically tied). All further training runs on the deployment candidate; two analyses re-use its predictions; the frontier prices everything.</p>
+  <p class="lede">Seven candidates are trained once under a frozen recipe. The selection rule picks the flagship (best) and the deployment candidate (smallest statistically tied). All further training runs on the deployment candidate; two analyses re-use its predictions; the frontier prices everything.</p>
   <div class="diag" style="flex:1;margin-top:1.6vh"><svg id="chainFig" viewBox="0 0 960 300"></svg></div>
 </section>
 
@@ -376,7 +376,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
       <dt>models</dt><dd>Qwen3-8B/14B · Phi-4-reasoning · Ministral-3-14B · Llama-3.1-8B · Gemma-4-E4B/31B</dd>
       <dt>recipe, frozen for all</dt><dd>LoRA (DoRA) r=16 α=32, all-linear, 1 epoch, lr 2e-4; 31B in 4-bit</dd>
       <dt>conditions</dt><dd>zero-shot and fine-tuned, catalog prompt, same 1,650-day slice</dd>
-      <dt>selection rule, fixed beforehand</dt><dd>best macro-F1 = flagship; smallest model with CI on the gap containing zero = deployment candidate</dd>
+      <dt>selection rule</dt><dd>best macro-F1 = flagship; smallest model with CI on the gap containing zero = deployment candidate</dd>
     </dl></div>
     <div style="flex:1">
       <div class="resnums">
@@ -513,7 +513,7 @@ Query day (DAY_ID=…): 21.30, 22.14, 24.03, 27.80, 27.80, …</div>
     <div style="flex:.85"><dl class="setupcard">
       <dt>target</dt><dd>the model states the fraction of energy removed (0–1) plus the manipulated window; a claimed manipulation with no stated magnitude counts as claiming 0.00</dd>
       <dt>truth</dt><dd>the pre-attack day recorded at injection: energy removed = 1 − E_attacked / E_pre-attack; the injected window boundaries for window-shaped attacks</dd>
-      <dt>interference check</dt><dd>classification vs the plain deployment candidate, specified before the run; same catalog prompt and recipe, so the added target is the only difference</dd>
+      <dt>interference check</dt><dd>classification vs the plain deployment candidate; same catalog prompt and recipe, so the added target is the only difference</dd>
     </dl></div>
     <div style="flex:1">
       <div class="resnums">
